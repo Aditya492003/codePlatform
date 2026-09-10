@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Code2, LayoutDashboard, Terminal, User, Settings, Award } from 'lucide-react';
+import { Code2, LayoutDashboard, Trophy, User, Settings, Award } from 'lucide-react';
 import { useProgress } from '../../context/ProgressContext';
 import { mockUser } from '../../data/mockUser';
 
@@ -16,8 +16,8 @@ export default function Navbar() {
 
   return (
     <nav className="h-14 bg-white border-b border-slate-200 flex items-center justify-between px-4 sm:px-6 sticky top-0 z-40">
-      {/* Brand */}
-      <div className="flex items-center gap-6">
+      {/* Brand & Main Nav Links */}
+      <div className="flex items-center gap-7">
         <Link to="/" className="flex items-center gap-2.5 font-bold text-slate-900 tracking-tight text-lg">
           <div className="w-7 h-7 rounded-md bg-slate-900 text-white flex items-center justify-center">
             <Code2 className="w-4 h-4" />
@@ -25,7 +25,7 @@ export default function Navbar() {
           <span>CodePractice</span>
         </Link>
 
-        {/* Navigation Links */}
+        {/* Navigation Links (Practice removed, added Top Rankers, Profile, Settings) */}
         <div className="hidden md:flex items-center gap-1">
           <Link
             to="/dashboard"
@@ -40,20 +40,44 @@ export default function Navbar() {
           </Link>
 
           <Link
-            to="/practice"
+            to="/leaderboard"
             className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
-              isLinkActive('/practice')
+              isLinkActive('/leaderboard')
                 ? 'bg-blue-50 text-blue-600 font-semibold'
                 : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
             }`}
           >
-            <Terminal className="w-4 h-4" />
-            <span>Practice</span>
+            <Trophy className="w-4 h-4 text-amber-500" />
+            <span>Top Rankers</span>
+          </Link>
+
+          <Link
+            to="/profile"
+            className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
+              isLinkActive('/profile')
+                ? 'bg-blue-50 text-blue-600 font-semibold'
+                : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+            }`}
+          >
+            <User className="w-4 h-4" />
+            <span>Profile</span>
+          </Link>
+
+          <Link
+            to="/settings"
+            className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
+              isLinkActive('/settings')
+                ? 'bg-blue-50 text-blue-600 font-semibold'
+                : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+            }`}
+          >
+            <Settings className="w-4 h-4" />
+            <span>Settings</span>
           </Link>
         </div>
       </div>
 
-      {/* Right User Stats & Profile */}
+      {/* Right User Stats & Profile Pill */}
       <div className="flex items-center gap-3">
         {/* Rating Pill */}
         <div className="flex items-center gap-1.5 px-3 py-1 bg-slate-100 border border-slate-200 rounded-full text-xs font-semibold text-slate-700">
@@ -74,16 +98,6 @@ export default function Navbar() {
             alt={mockUser.username}
             className="w-7 h-7 rounded-full object-cover"
           />
-        </Link>
-
-        <Link
-          to="/settings"
-          className={`p-1.5 rounded-md text-slate-500 hover:text-slate-900 hover:bg-slate-100 transition-colors ${
-            isLinkActive('/settings') ? 'bg-slate-100 text-slate-900' : ''
-          }`}
-          title="Settings"
-        >
-          <Settings className="w-4 h-4" />
         </Link>
       </div>
     </nav>

@@ -4,6 +4,7 @@ import Navbar from './components/common/Navbar';
 import LandingPage from './pages/LandingPage';
 import DashboardPage from './pages/DashboardPage';
 import PracticeWorkspacePage from './pages/PracticeWorkspacePage';
+import LeaderboardPage from './pages/LeaderboardPage';
 import ProfilePage from './pages/ProfilePage';
 import SettingsPage from './pages/SettingsPage';
 
@@ -15,6 +16,7 @@ export default function App() {
         <Routes>
           <Route path="/" element={<LandingPage />} />
           <Route path="/dashboard" element={<DashboardPage />} />
+          <Route path="/leaderboard" element={<LeaderboardPage />} />
           <Route path="/practice" element={<PracticeWorkspacePage />} />
           <Route path="/practice/:questionId" element={<PracticeWorkspacePage />} />
           <Route path="/profile" element={<ProfilePage />} />
