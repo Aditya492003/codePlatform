@@ -1,5 +1,5 @@
 import React from 'react';
-import { Routes, Route } from 'react-router-dom';
+import { Routes, Route, useLocation } from 'react-router-dom';
 import Navbar from './components/common/Navbar';
 import LandingPage from './pages/LandingPage';
 import DashboardPage from './pages/DashboardPage';
@@ -9,9 +9,14 @@ import ProfilePage from './pages/ProfilePage';
 import SettingsPage from './pages/SettingsPage';
 
 export default function App() {
+  const location = useLocation();
+  const isLandingPage = location.pathname === '/';
+
   return (
     <div className="min-h-screen flex flex-col bg-[#F8F9FA] text-slate-900 font-sans">
-      <Navbar />
+      {/* Show main internal Navbar on all pages except the Landing Page */}
+      {!isLandingPage && <Navbar />}
+
       <main className="flex-1 flex flex-col">
         <Routes>
           <Route path="/" element={<LandingPage />} />

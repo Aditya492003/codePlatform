@@ -1,5 +1,6 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
+import { SignedIn, SignedOut, SignInButton, UserButton } from '@clerk/clerk-react';
 import { Code2, LayoutDashboard, Trophy, User, Settings, Award } from 'lucide-react';
 import { useProgress } from '../../context/ProgressContext';
 import { mockUser } from '../../data/mockUser';
@@ -25,7 +26,7 @@ export default function Navbar() {
           <span>CodePractice</span>
         </Link>
 
-        {/* Navigation Links (Practice removed, added Top Rankers, Profile, Settings) */}
+        {/* Navigation Links */}
         <div className="hidden md:flex items-center gap-1">
           <Link
             to="/dashboard"
@@ -77,7 +78,7 @@ export default function Navbar() {
         </div>
       </div>
 
-      {/* Right User Stats & Profile Pill */}
+      {/* Right User Stats & Clerk User Profile */}
       <div className="flex items-center gap-3">
         {/* Rating Pill */}
         <div className="flex items-center gap-1.5 px-3 py-1 bg-slate-100 border border-slate-200 rounded-full text-xs font-semibold text-slate-700">
@@ -86,19 +87,17 @@ export default function Navbar() {
           <span className="font-mono font-bold text-slate-900">{userRating}</span>
         </div>
 
-        <Link
-          to="/profile"
-          className={`flex items-center gap-2 p-1 rounded-full border transition-colors ${
-            isLinkActive('/profile') ? 'border-blue-500 ring-2 ring-blue-100' : 'border-slate-200 hover:border-slate-300'
-          }`}
-          title="View Profile"
-        >
-          <img
-            src={mockUser.avatarUrl}
-            alt={mockUser.username}
-            className="w-7 h-7 rounded-full object-cover"
-          />
-        </Link>
+        <SignedIn>
+          <UserButton afterSignOutUrl="/" />
+        </SignedIn>
+
+        <SignedOut>
+          <SignInButton mode="modal">
+            <button className="text-xs font-semibold px-3 py-1.5 rounded-md bg-blue-600 text-white hover:bg-blue-700 transition-colors cursor-pointer">
+              Sign In
+            </button>
+          </SignInButton>
+        </SignedOut>
       </div>
     </nav>
   );

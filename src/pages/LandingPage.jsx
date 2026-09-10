@@ -1,15 +1,19 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import {
+  SignedIn,
+  SignedOut,
+  SignInButton,
+  SignUpButton,
+  UserButton
+} from '@clerk/clerk-react';
+import {
   GraduationCap,
   ChevronRight,
   Code2,
   Terminal,
   Trophy,
   CheckCircle2,
-  Sparkles,
-  Layers,
-  ArrowRight,
   BookOpen,
   Laptop
 } from 'lucide-react';
@@ -19,10 +23,46 @@ export default function LandingPage() {
   return (
     <div className="flex-1 bg-white text-slate-900 font-sans flex flex-col">
       {/* ==================================================== */}
-      {/* 1. HERO SECTION (LeetCode Dark Slanted Backdrop)     */}
+      {/* 1. DEDICATED LANDING TOPBAR (LeetCode Dark Minimal)  */}
       {/* ==================================================== */}
-      <section className="relative bg-[#262626] text-white pt-16 pb-28 sm:pb-36 overflow-hidden">
-        {/* Subtle geometric background facet lines */}
+      <header className="h-14 bg-[#262626] border-b border-white/10 px-4 sm:px-8 flex items-center justify-between sticky top-0 z-50">
+        {/* Brand */}
+        <Link to="/" className="flex items-center gap-2.5 font-bold text-white tracking-tight text-lg">
+          <div className="w-7 h-7 rounded-md bg-white text-slate-900 flex items-center justify-center">
+            <Code2 className="w-4 h-4" />
+          </div>
+          <span>CodePractice</span>
+        </Link>
+
+        {/* Right Auth Controls */}
+        <div className="flex items-center gap-4">
+          <SignedOut>
+            <SignInButton mode="modal">
+              <button className="text-sm font-semibold text-slate-300 hover:text-white transition-colors cursor-pointer px-3 py-1.5 rounded-md hover:bg-white/5">
+                Sign In
+              </button>
+            </SignInButton>
+          </SignedOut>
+
+          <SignedIn>
+            <div className="flex items-center gap-3">
+              <Link
+                to="/dashboard"
+                className="text-xs sm:text-sm font-semibold px-4 py-1.5 rounded-full bg-white/10 hover:bg-white/20 text-white border border-white/20 transition-colors"
+              >
+                Open Dashboard
+              </Link>
+              <UserButton afterSignOutUrl="/" />
+            </div>
+          </SignedIn>
+        </div>
+      </header>
+
+      {/* ==================================================== */}
+      {/* 2. HERO SECTION (LeetCode Dark Slanted Backdrop)     */}
+      {/* ==================================================== */}
+      <section className="relative bg-[#262626] text-white pt-14 pb-28 sm:pb-36 overflow-hidden">
+        {/* Subtle geometric ambient lighting */}
         <div className="absolute inset-0 opacity-10 pointer-events-none">
           <div className="absolute -top-24 -left-24 w-96 h-96 bg-white/10 rounded-full blur-3xl" />
           <div className="absolute top-1/2 -right-24 w-96 h-96 bg-teal-500/10 rounded-full blur-3xl" />
@@ -35,7 +75,7 @@ export default function LandingPage() {
               <div className="relative w-full max-w-md transform lg:-rotate-2 hover:rotate-0 transition-transform duration-500 ease-out">
                 {/* Tablet Frame */}
                 <div className="bg-white rounded-2xl p-4 sm:p-5 shadow-2xl border-4 border-slate-100 text-slate-800">
-                  {/* Top 4 Colorful Stat Tiles (like LeetCode tablet) */}
+                  {/* Top 4 Colorful Stat Tiles */}
                   <div className="grid grid-cols-4 gap-2 mb-4">
                     <div className="bg-sky-500 text-white rounded-lg p-2 flex flex-col items-center justify-center text-center shadow-xs">
                       <span className="text-[10px] font-bold uppercase opacity-80">HTML</span>
@@ -55,7 +95,7 @@ export default function LandingPage() {
                     </div>
                   </div>
 
-                  {/* Tablet Center Split (Question list + Mini Donut) */}
+                  {/* Tablet Center Split */}
                   <div className="grid grid-cols-12 gap-3 bg-slate-50 p-3 rounded-xl border border-slate-200">
                     {/* Left Question List */}
                     <div className="col-span-8 flex flex-col gap-2">
@@ -97,7 +137,7 @@ export default function LandingPage() {
               </div>
             </div>
 
-            {/* Right: Hero Headline & Action Button */}
+            {/* Right: Hero Headline & Dynamic Auth Action Button */}
             <div className="lg:col-span-6 flex flex-col items-center lg:items-start text-center lg:text-left gap-6">
               <h1 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-white tracking-tight leading-tight">
                 A New Way to Learn
@@ -108,21 +148,23 @@ export default function LandingPage() {
               </p>
 
               <div className="flex flex-col sm:flex-row items-center gap-4 mt-2 w-full sm:w-auto">
-                <Link
-                  to="/dashboard"
-                  className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-7 py-3 bg-[#00AF9B] hover:bg-[#009B89] text-white font-bold rounded-full text-sm transition-all shadow-lg hover:shadow-teal-500/20 active:scale-98"
-                >
-                  <span>Create Account</span>
-                  <ChevronRight className="w-4 h-4" />
-                </Link>
+                <SignedOut>
+                  <SignUpButton mode="modal">
+                    <button className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-8 py-3.5 bg-[#00AF9B] hover:bg-[#009B89] text-white font-bold rounded-full text-sm transition-all shadow-lg hover:shadow-teal-500/20 active:scale-98 cursor-pointer">
+                      <span>Create Account</span>
+                      <ChevronRight className="w-4 h-4" />
+                    </button>
+                  </SignUpButton>
+                </SignedOut>
 
-                <Link
-                  to="/dashboard"
-                  className="text-xs sm:text-sm font-semibold text-slate-300 hover:text-white transition-colors flex items-center gap-1"
-                >
-                  <span>Explore Questions</span>
-                  <ChevronRight className="w-3.5 h-3.5 text-slate-400" />
-                </Link>
+                <SignedIn>
+                  <Link
+                    to="/dashboard"
+                    className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-8 py-3.5 bg-[#00AF9B] hover:bg-[#009B89] text-white font-bold rounded-full text-sm transition-all shadow-lg hover:shadow-teal-500/20 active:scale-98"
+                  >
+                    <span>Continue to Dashboard →</span>
+                  </Link>
+                </SignedIn>
               </div>
             </div>
           </div>
@@ -136,7 +178,7 @@ export default function LandingPage() {
       </section>
 
       {/* ==================================================== */}
-      {/* 2. "START EXPLORING" BADGE & CORE TRACKS             */}
+      {/* 3. "START EXPLORING" BADGE & CORE TRACKS             */}
       {/* ==================================================== */}
       <section className="relative -mt-10 sm:-mt-12 z-20 pb-20">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 flex flex-col items-center">
@@ -180,7 +222,7 @@ export default function LandingPage() {
               {/* Visual Card */}
               <div className="lg:col-span-6 bg-slate-50 border border-slate-200 rounded-2xl p-6 shadow-xs">
                 <div className="grid grid-cols-3 gap-3">
-                  {TECHNOLOGIES.map((tech, idx) => (
+                  {TECHNOLOGIES.map((tech) => (
                     <div key={tech} className="bg-white p-4 rounded-xl border border-slate-200 text-center flex flex-col items-center gap-2">
                       <div className="w-9 h-9 rounded-lg bg-slate-100 flex items-center justify-center font-bold text-xs text-slate-800">
                         {tech === 'JavaScript' ? 'JS' : tech}
@@ -299,7 +341,7 @@ export default function LandingPage() {
       </section>
 
       {/* ==================================================== */}
-      {/* 3. CLEAN LEETCODE-STYLE FOOTER                       */}
+      {/* 4. CLEAN LEETCODE-STYLE FOOTER                       */}
       {/* ==================================================== */}
       <footer className="bg-[#1A1A1A] text-slate-400 text-xs py-10 border-t border-slate-800 mt-auto">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 flex flex-col sm:flex-row items-center justify-between gap-6">
