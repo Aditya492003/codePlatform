@@ -5,9 +5,9 @@ import { questionService } from '../services/questionService';
 const ProgressContext = createContext(null);
 
 export function ProgressProvider({ children }) {
-  const [selectedTech, setSelectedTech] = useState('JavaScript');
-  const [selectedDifficulty, setSelectedDifficulty] = useState('Medium');
-  const [selectedLevel, setSelectedLevel] = useState(2);
+  const [selectedTech, setSelectedTech] = useState('HTML');
+  const [selectedDifficulty, setSelectedDifficulty] = useState('Beginner');
+  const [selectedLevel, setSelectedLevel] = useState(1);
   const [userRating, setUserRating] = useState(mockUser.overallRating);
   const [submissions, setSubmissions] = useState(mockUser.recentSubmissions);
   const [solvedCount, setSolvedCount] = useState(mockUser.problemsSolved);
@@ -17,7 +17,7 @@ export function ProgressProvider({ children }) {
   const [questionStatuses, setQuestionStatuses] = useState(() => {
     const initialMap = {};
     for (let i = 1; i <= 20; i++) {
-      const qId = `js-med-l2-q${String(i).padStart(2, '0')}`;
+      const qId = `html-beg-l1-q${String(i).padStart(2, '0')}`;
       if (i === 1) {
         initialMap[qId] = 'available';
       } else {

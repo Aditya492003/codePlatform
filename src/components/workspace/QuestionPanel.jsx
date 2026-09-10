@@ -38,6 +38,22 @@ export default function QuestionPanel({ question }) {
         <p className="text-sm lg:text-base text-slate-600 leading-relaxed">
           {question.description}
         </p>
+
+        {question.concepts && question.concepts.length > 0 && (
+          <div className="flex flex-wrap items-center gap-1.5 pt-1">
+            <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider mr-1">
+              Concepts:
+            </span>
+            {question.concepts.map((c, i) => (
+              <span
+                key={i}
+                className="px-2 py-0.5 bg-slate-100 border border-slate-200 rounded text-xs font-mono font-medium text-slate-700"
+              >
+                {c}
+              </span>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* For PREDICT questions: show code snippet inside question panel */}
