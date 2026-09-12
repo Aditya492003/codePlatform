@@ -26,7 +26,7 @@ export default function QuestionNavigator({ questions = [] }) {
 
   // Find question ID by slot number
   const getQuestionIdByNumber = (num) => {
-    const techPrefix = selectedTech === 'JavaScript' ? 'js' : selectedTech.toLowerCase();
+    const techPrefix = selectedTech === 'HTML' ? 'ht' : selectedTech === 'CSS' ? 'cs' : 'js';
     const diffPrefix = selectedDifficulty.toLowerCase().slice(0, 3);
     return `${techPrefix}-${diffPrefix}-l${selectedLevel}-q${String(num).padStart(2, '0')}`;
   };

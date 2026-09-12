@@ -146,49 +146,81 @@ export const groqCodeEvaluator = {
     }
 
     // 3. AI CODE SCANNER VIA GROQ
-    const systemPrompt = `You are a Code Evaluator. Strictly test code for requirements, edge cases, and output correctness.
-If code is wrong, buggy, or does not return expected values, mark failed and score low.
-Output ONLY JSON matching:
+    const systemPrompt = `You are an Expert Automated Code Evaluator & AST Scanner for ${question.technology}.
+Your job is to strictly scan the user's submitted code against the assigned predefined challenge requirements, constraints, and reference solution.
+
+WHAT TO SCAN & VERIFY:
+1. Requirements Compliance: Check if all listed requirements, tags, selectors, attributes, or functions are properly implemented.
+2. Syntax & Semantic Validity: For HTML/CSS/JS, ensure valid syntax, proper nesting, and semantic best practices.
+3. Execution Output: Compare user code logic against the reference solution and expected behaviors.
+4. Edge Cases: Check for missing attributes, malformed tags, incorrect casing, or logic flaws.
+
+SCORING & CLASSIFICATION RULES:
+- 95-100: "Perfect" (Fully correct, optimal semantics and clean structure)
+- 85-94: "Excellent" (Meets all requirements with high code quality)
+- 70-84: "Proficient" (Meets core requirements, minor style or edge case issues)
+- 50-69: "Developing" (Partial solution, missing some key requirements)
+- 0-49: "Needs Work" (Incorrect, empty, or fails core requirements)
+
+Output ONLY valid JSON adhering to this exact schema:
 {
-  "overallScore": 85,
+  "overallScore": 90,
   "status": "Accepted",
   "classification": "Excellent",
   "testsPassed": 2,
   "totalTests": 2,
   "breakdown": {
     "correctness": { "score": 45, "max": 50, "label": "Correctness" },
-    "codeQuality": { "score": 15, "max": 20, "label": "Code Quality" },
-    "structure": { "score": 8, "max": 10, "label": "Structure" },
+    "codeQuality": { "score": 18, "max": 20, "label": "Code Quality" },
+    "structure": { "score": 9, "max": 10, "label": "Structure" },
     "readability": { "score": 9, "max": 10, "label": "Readability" },
-    "bestPractices": { "score": 8, "max": 10, "label": "Best Practices" }
+    "bestPractices": { "score": 9, "max": 10, "label": "Best Practices" }
   },
   "tests": [
     {
       "id": "tc-1",
-      "name": "Correctness test",
+      "name": "Requirement & Syntax Verification",
       "status": "passed",
-      "input": "input",
-      "expected": "expected",
-      "actual": "actual",
+      "input": "User Submission",
+      "expected": "Expected element/rule/logic",
+      "actual": "Actual observed element/rule/logic",
+      "error": ""
+    },
+    {
+      "id": "tc-2",
+      "name": "Output & Semantic Check",
+      "status": "passed",
+      "input": "Execution Verification",
+      "expected": "Compliant semantics and output",
+      "actual": "Compliant semantics and output",
       "error": ""
     }
   ],
   "aiReview": {
-    "strengths": ["Clear logic"],
-    "improvements": ["Edge case tip"]
+    "strengths": [
+      "Precise explanation of what the user did right"
+    ],
+    "improvements": [
+      "Specific suggestions for improvement or next steps"
+    ]
   },
   "codeSmells": []
 }`;
 
-    const userPrompt = `Evaluate this ${question.technology} code and return ONLY valid JSON:
-Task: ${question.title}
+    const userPrompt = `Evaluate this ${question.technology} submission for predefined challenge:
+Challenge Title: ${question.title}
 Requirements: ${JSON.stringify(question.requirements || [])}
-Examples: ${JSON.stringify(question.examples || [])}
+Constraints: ${JSON.stringify(question.constraints || [])}
+Starter Code:
+${question.starterCode || '(none)'}
 
-User Code:
+Reference Solution:
+${question.solutionCode || '(none)'}
+
+User Submitted Code:
 ${cleanUserCode}
 
-Return JSON format adhering to the system schema.`;
+Return ONLY valid JSON matching the system schema.`;
 
     try {
       const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
@@ -204,7 +236,7 @@ Return JSON format adhering to the system schema.`;
             { role: 'user', content: userPrompt },
           ],
           response_format: { type: 'json_object' },
-          max_tokens: 650,
+          max_tokens: 1500,
           temperature: 0.1,
         }),
       });

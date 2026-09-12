@@ -135,14 +135,15 @@ export const questionService = {
     } catch (err) {
       console.warn(`[questionService] Failed to load question ${id}, falling back:`, err.message);
     }
-    return createTechFallback('JavaScript', 'Beginner', 1, 1, id);
+    const inferredTech = id?.startsWith('cs-') ? 'CSS' : id?.startsWith('js-') ? 'JavaScript' : 'HTML';
+    return createTechFallback(inferredTech, 'Beginner', 1, 1, id);
   },
 
   /**
-   * Generate an adaptive question using Groq AI (openai/gpt-oss-120b)
+   * Fetch predefined question based on user progression
    */
   async getAdaptiveNextQuestion({
-    technology = 'JavaScript',
+    technology = 'HTML',
     difficulty = 'Beginner',
     level = 1,
     questionNumber = 1,
@@ -169,7 +170,7 @@ export const questionService = {
         });
       }
     } catch (err) {
-      console.warn('[questionService] Groq AI generation fallback:', err.message);
+      console.warn('[questionService] Question fetch fallback:', err.message);
     }
 
     return createTechFallback(technology, difficulty, level, questionNumber);
@@ -178,7 +179,7 @@ export const questionService = {
   /**
    * Get questions for a given track filter
    */
-  async getQuestionsByFilter(technology = 'JavaScript', difficulty = 'Beginner', level = 1) {
+  async getQuestionsByFilter(technology = 'HTML', difficulty = 'Beginner', level = 1) {
     try {
       const res = await apiRequest(
         `/questions?technology=${encodeURIComponent(technology)}&difficulty=${encodeURIComponent(difficulty)}&level=${level}&limit=20`

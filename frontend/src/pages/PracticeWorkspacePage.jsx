@@ -34,7 +34,7 @@ export default function PracticeWorkspacePage() {
   useEffect(() => {
     let targetId = questionId;
     if (!targetId) {
-      const techPrefix = selectedTech === 'JavaScript' ? 'js' : selectedTech.toLowerCase();
+      const techPrefix = selectedTech === 'HTML' ? 'ht' : selectedTech === 'CSS' ? 'cs' : 'js';
       const diffPrefix = selectedDifficulty.toLowerCase().slice(0, 3);
       targetId = `${techPrefix}-${diffPrefix}-l${selectedLevel}-q01`;
     }
@@ -52,10 +52,10 @@ export default function PracticeWorkspacePage() {
         </div>
         <div className="flex flex-col items-center gap-1.5 max-w-sm">
           <h3 className="text-base font-bold text-slate-900">
-            Groq AI Adaptive Intelligence
+            Loading Challenge
           </h3>
           <p className="text-xs text-slate-500">
-            Calibrating challenge difficulty, code scaffolding, and cognitive depth to your performance...
+            Preparing your challenge environment and verification test suite...
           </p>
         </div>
       </div>
@@ -68,7 +68,7 @@ export default function PracticeWorkspacePage() {
     if (!currentQuestion) return;
     const nextNum = currentQuestion.questionNumber + 1;
     if (nextNum <= 20) {
-      const techPrefix = selectedTech === 'JavaScript' ? 'js' : selectedTech.toLowerCase();
+      const techPrefix = selectedTech === 'HTML' ? 'ht' : selectedTech === 'CSS' ? 'cs' : 'js';
       const diffPrefix = selectedDifficulty.toLowerCase().slice(0, 3);
       const nextId = `${techPrefix}-${diffPrefix}-l${selectedLevel}-q${String(nextNum).padStart(2, '0')}`;
       navigate(`/practice/${nextId}`);

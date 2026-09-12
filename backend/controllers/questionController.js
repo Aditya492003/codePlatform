@@ -35,7 +35,7 @@ export const getQuestions = async (req, res) => {
 };
 
 /**
- * Get single question by slug or ID, or dynamically generate on-demand if not found
+ * Get single question by slug or ID from predefined database
  * GET /api/questions/:id
  */
 export const getQuestionById = async (req, res) => {
@@ -48,23 +48,30 @@ export const getQuestionById = async (req, res) => {
     }
 
     if (!question) {
-      // If it looks like a structured slug like "js-beg-l1-q01", attempt on-demand AI generation
+      // If it looks like a structured slug like "ht-beg-l1-q01"
       const parts = id.split('-');
       if (parts.length >= 4) {
         const techMap = { js: 'JavaScript', ht: 'HTML', html: 'HTML', cs: 'CSS', css: 'CSS' };
         const diffMap = { beg: 'Beginner', med: 'Medium', adv: 'Advanced', exp: 'Expert' };
-        const tech = techMap[parts[0].toLowerCase()] || 'JavaScript';
+        const tech = techMap[parts[0].toLowerCase()] || 'HTML';
         const diff = diffMap[parts[1].toLowerCase()] || 'Beginner';
         const lvl = parseInt(parts[2].replace('l', ''), 10) || 1;
         const qNum = parseInt(parts[3].replace('q', ''), 10) || 1;
 
-        console.log(`🤖 Question ${id} not found in DB. Triggering on-demand Groq AI generation for ${tech} ${diff} L${lvl}...`);
-        question = await groqQuestionGenerator.generateAdaptiveQuestion({
-          technology: tech,
-          difficulty: diff,
+        question = await Question.findOne({
+          technology: new RegExp(`^${tech}$`, 'i'),
+          difficulty: new RegExp(`^${diff}$`, 'i'),
           level: lvl,
           questionNumber: qNum,
         });
+
+        if (!question) {
+          question = await Question.findOne({
+            technology: new RegExp(`^${tech}$`, 'i'),
+            difficulty: new RegExp(`^${diff}$`, 'i'),
+            level: lvl,
+          }).sort({ questionNumber: 1 });
+        }
       }
     }
 
@@ -83,44 +90,66 @@ export const getQuestionById = async (req, res) => {
 };
 
 /**
- * Dynamically generate an adaptive AI question using Groq openai/gpt-oss-120b
+ * Fetch predefined question from database based on user progression
  * POST /api/questions/generate
  */
 export const generateAdaptiveQuestion = async (req, res) => {
   try {
     const {
-      technology = 'JavaScript',
+      technology = 'HTML',
       difficulty = 'Beginner',
       level = 1,
       questionNumber = 1,
-      userId = 'usr_guest',
-      performanceContext = {},
     } = req.body;
 
-    console.log(`🧠 Generating adaptive question with Groq AI for User: ${userId} (${technology}, ${difficulty}, L${level}, Q${questionNumber})`);
-    if (performanceContext.previousTimeSeconds) {
-      console.log(`⏱️ User's previous solve time: ${performanceContext.previousTimeSeconds}s, score: ${performanceContext.previousScore}`);
-    }
+    const normalizedTech =
+      technology.toLowerCase() === 'css'
+        ? 'CSS'
+        : technology.toLowerCase() === 'html'
+        ? 'HTML'
+        : 'JavaScript';
 
-    const question = await groqQuestionGenerator.generateAdaptiveQuestion({
-      technology,
-      difficulty,
+    // 1. Try exact match from predefined DB questions
+    let question = await Question.findOne({
+      technology: new RegExp(`^${normalizedTech}$`, 'i'),
+      difficulty: new RegExp(`^${difficulty}$`, 'i'),
       level: Number(level),
       questionNumber: Number(questionNumber),
-      userId,
-      performanceContext,
     });
+
+    // 2. If exact question number not found, find next available or first question in this level
+    if (!question) {
+      question = await Question.findOne({
+        technology: new RegExp(`^${normalizedTech}$`, 'i'),
+        difficulty: new RegExp(`^${difficulty}$`, 'i'),
+        level: Number(level),
+      }).sort({ questionNumber: 1 });
+    }
+
+    // 3. If level not found, find first question in this track
+    if (!question) {
+      question = await Question.findOne({
+        technology: new RegExp(`^${normalizedTech}$`, 'i'),
+      }).sort({ level: 1, questionNumber: 1 });
+    }
+
+    if (!question) {
+      return res.status(404).json({
+        success: false,
+        message: `No predefined questions found for ${normalizedTech}`,
+      });
+    }
 
     res.status(200).json({
       success: true,
-      message: 'Adaptive question generated successfully via Groq AI',
+      message: 'Predefined question retrieved from database',
       data: question,
     });
   } catch (error) {
-    console.error('Failed to generate adaptive question:', error);
+    console.error('Failed to retrieve predefined question:', error);
     res.status(500).json({
       success: false,
-      message: 'Failed to generate question with AI',
+      message: 'Failed to retrieve question from database',
       error: error.message,
     });
   }

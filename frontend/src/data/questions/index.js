@@ -1,16 +1,4 @@
-import { javascriptQuestions } from './javascriptQuestions';
-import { htmlQuestions } from './htmlQuestions';
-import { cssQuestions } from './cssQuestions';
-
-export const allQuestions = [
-  ...javascriptQuestions,
-  ...htmlQuestions,
-  ...cssQuestions
-];
-
-export { javascriptQuestions, htmlQuestions, cssQuestions };
-
-export const TECHNOLOGIES = ['JavaScript', 'HTML', 'CSS'];
+export const TECHNOLOGIES = ['HTML', 'CSS', 'JavaScript'];
 export const DIFFICULTIES = ['Beginner', 'Medium', 'Advanced', 'Expert'];
 export const LEVELS = [1, 2, 3, 4];
 export const TOTAL_QUESTIONS_PER_LEVEL = 20;

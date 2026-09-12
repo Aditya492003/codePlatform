@@ -8,7 +8,7 @@ const ProgressContext = createContext(null);
 export function ProgressProvider({ children }) {
   const { user: clerkUser, isLoaded } = useUser();
 
-  const [selectedTech, setSelectedTech] = useState('JavaScript');
+  const [selectedTech, setSelectedTech] = useState('HTML');
   const [selectedDifficulty, setSelectedDifficulty] = useState('Beginner');
   const [selectedLevel, setSelectedLevel] = useState(1);
 
@@ -37,7 +37,7 @@ export function ProgressProvider({ children }) {
   const [questionStatuses, setQuestionStatuses] = useState(() => {
     const initialMap = {};
     for (let i = 1; i <= 20; i++) {
-      const qId = `js-beg-l1-q${String(i).padStart(2, '0')}`;
+      const qId = `ht-beg-l1-q${String(i).padStart(2, '0')}`;
       initialMap[qId] = i === 1 ? 'available' : 'locked';
     }
     return initialMap;
@@ -63,7 +63,7 @@ export function ProgressProvider({ children }) {
         });
       }
 
-      // 2. Fetch live profile
+      // 2. Fetch full user stats from Atlas
       const profile = await userService.getUserProfile(userId);
       if (profile) {
         setUserProfile(profile);
@@ -72,28 +72,57 @@ export function ProgressProvider({ children }) {
         setTier(profile.tier || 'Bronze');
         if (profile.skillRatings) setSkillRatings(profile.skillRatings);
         if (profile.difficultyProgress) setDifficultyProgress(profile.difficultyProgress);
-        if (profile.ratingHistory?.length) setRatingHistory(profile.ratingHistory);
+        if (profile.ratingHistory) setRatingHistory(profile.ratingHistory);
       }
 
-      // 3. Fetch user past submissions
-      try {
-        const subsRes = await apiRequest(`/submissions/user/${userId}`);
-        if (subsRes?.data) {
-          setSubmissions(subsRes.data);
-        }
-      } catch (err) {
-        console.warn('Submissions fetch error:', err.message);
+      // 3. Fetch user submissions from Atlas
+      const userSubmissions = await userService.getUserSubmissions(userId);
+      if (userSubmissions && Array.isArray(userSubmissions)) {
+        setSubmissions(userSubmissions);
       }
     } catch (err) {
-      console.warn('Refresh user profile error:', err.message);
+      console.warn('Could not sync user profile with Atlas:', err.message);
     }
   }, [clerkUser]);
 
   useEffect(() => {
-    if (isLoaded) {
-      refreshUserProfile();
-    }
-  }, [isLoaded, clerkUser, refreshUserProfile]);
+    refreshUserProfile();
+  }, [refreshUserProfile]);
+
+  // Synchronize question progress & unlock states with track/level and user's solved list
+  useEffect(() => {
+    const techPrefix = selectedTech === 'HTML' ? 'ht' : selectedTech === 'CSS' ? 'cs' : 'js';
+    const diffPrefix = (selectedDifficulty || 'Beginner').toLowerCase().slice(0, 3);
+    const prefix = `${techPrefix}-${diffPrefix}-l${selectedLevel}-q`;
+
+    const solvedList = userProfile?.solvedQuestions || [];
+
+    setQuestionStatuses((prev) => {
+      const updated = { ...prev };
+      let highestSolvedNum = 0;
+
+      for (let i = 1; i <= 20; i++) {
+        const qId = `${prefix}${String(i).padStart(2, '0')}`;
+        if (solvedList.includes(qId)) {
+          updated[qId] = 'submitted';
+          if (i > highestSolvedNum) highestSolvedNum = i;
+        }
+      }
+
+      for (let i = 1; i <= 20; i++) {
+        const qId = `${prefix}${String(i).padStart(2, '0')}`;
+        if (updated[qId] !== 'submitted') {
+          if (i <= highestSolvedNum + 1) {
+            updated[qId] = 'available';
+          } else if (!updated[qId]) {
+            updated[qId] = 'locked';
+          }
+        }
+      }
+
+      return updated;
+    });
+  }, [selectedTech, selectedDifficulty, selectedLevel, userProfile]);
 
   /**
    * Unlock next question & sync state immediately when a solution is submitted
@@ -105,7 +134,7 @@ export function ProgressProvider({ children }) {
 
       const nextNum = questionNumber + 1;
       if (nextNum <= 20) {
-        const techPrefix = selectedTech === 'JavaScript' ? 'js' : selectedTech.toLowerCase();
+        const techPrefix = selectedTech === 'HTML' ? 'ht' : selectedTech === 'CSS' ? 'cs' : 'js';
         const diffPrefix = selectedDifficulty.toLowerCase().slice(0, 3);
         const nextId = `${techPrefix}-${diffPrefix}-l${selectedLevel}-q${String(nextNum).padStart(2, '0')}`;
 

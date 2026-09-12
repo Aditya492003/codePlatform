@@ -29,12 +29,10 @@ const SubmissionSchema = new mongoose.Schema(
     },
     technology: {
       type: String,
-      enum: ['JavaScript', 'HTML', 'CSS'],
-      required: true,
+      default: 'HTML',
     },
     difficulty: {
       type: String,
-      enum: ['Beginner', 'Medium', 'Advanced', 'Expert'],
       default: 'Beginner',
     },
     level: {
@@ -43,12 +41,11 @@ const SubmissionSchema = new mongoose.Schema(
     },
     code: {
       type: String,
-      required: true,
+      default: '',
     },
     status: {
       type: String,
-      enum: ['Accepted', 'Partial', 'Failed', 'Error'],
-      default: 'Accepted',
+      default: 'Failed',
       index: true,
     },
     score: {
@@ -59,7 +56,7 @@ const SubmissionSchema = new mongoose.Schema(
     },
     classification: {
       type: String,
-      default: 'Proficient',
+      default: 'Needs Work',
     },
     ratingChange: {
       type: Number,

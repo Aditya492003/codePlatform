@@ -47,7 +47,6 @@ const UserSchema = new mongoose.Schema(
     },
     tier: {
       type: String,
-      enum: ['Novice', 'Bronze', 'Silver', 'Gold', 'Platinum', 'Diamond', 'Master', 'Grandmaster'],
       default: 'Bronze',
     },
     problemsSolved: {
@@ -95,8 +94,8 @@ const UserSchema = new mongoose.Schema(
     },
     ratingHistory: [
       {
-        date: { type: String, required: true },
-        rating: { type: Number, required: true },
+        date: { type: String, default: 'Today' },
+        rating: { type: Number, default: 750 },
       },
     ],
     badges: [
