@@ -96,6 +96,13 @@ export default function TestResults() {
                       </div>
                     </div>
                   )}
+
+                  {tc.error && (
+                    <div className="text-[11px] bg-red-950/40 text-red-300 p-2 rounded border border-red-800/50 flex flex-col gap-0.5">
+                      <span className="text-[10px] font-bold text-red-400 uppercase tracking-wider">Error / Diagnosis:</span>
+                      <span>{tc.error}</span>
+                    </div>
+                  )}
                 </div>
               ))}
             </div>

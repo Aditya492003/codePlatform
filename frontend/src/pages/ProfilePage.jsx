@@ -18,7 +18,7 @@ export default function ProfilePage() {
     submissions,
   } = useProgress();
 
-  const displayName = clerkUser?.fullName || userProfile?.fullName || 'Active Developer';
+  const displayName = clerkUser?.fullName || userProfile?.fullName || clerkUser?.firstName || 'Developer';
   const displayUsername = clerkUser?.username || userProfile?.username || 'developer';
   const displayAvatar = clerkUser?.imageUrl || userProfile?.avatarUrl || '';
 

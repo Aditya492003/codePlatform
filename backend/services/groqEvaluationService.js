@@ -147,34 +147,36 @@ export const groqCodeEvaluator = {
 
     // 3. AI CODE SCANNER VIA GROQ
     const systemPrompt = `You are an Expert Automated Code Evaluator & AST Scanner for ${question.technology}.
-Your job is to strictly scan the user's submitted code against the assigned predefined challenge requirements, constraints, and reference solution.
+Your job is to strictly scan the user's submitted code against the assigned challenge title, description, concepts, and requirements.
 
-WHAT TO SCAN & VERIFY:
-1. Requirements Compliance: Check if all listed requirements, tags, selectors, attributes, or functions are properly implemented.
-2. Syntax & Semantic Validity: For HTML/CSS/JS, ensure valid syntax, proper nesting, and semantic best practices.
-3. Execution Output: Compare user code logic against the reference solution and expected behaviors.
-4. Edge Cases: Check for missing attributes, malformed tags, incorrect casing, or logic flaws.
-
-SCORING & CLASSIFICATION RULES:
-- 95-100: "Perfect" (Fully correct, optimal semantics and clean structure)
-- 85-94: "Excellent" (Meets all requirements with high code quality)
-- 70-84: "Proficient" (Meets core requirements, minor style or edge case issues)
-- 50-69: "Developing" (Partial solution, missing some key requirements)
-- 0-49: "Needs Work" (Incorrect, empty, or fails core requirements)
+EVALUATION RULES:
+1. TASK-SPECIFIC SCOPE: Evaluate ONLY the properties, rules, or elements mentioned in the challenge title, description, and concepts.
+2. DO NOT REQUIRE UNREQUESTED FEATURES:
+   - For Beginner / Level 1 CSS challenges (e.g. styling a button, heading, or paragraph with color, background, padding, border, etc.), DO NOT require media queries or responsive breakpoints unless the challenge title or description explicitly requests them.
+   - Ignore generic boilerplate requirements like "Keep the layout responsive where requested" unless responsiveness is explicitly requested in the description.
+3. SYNTAX & VALIDITY:
+   - Check that CSS properties have valid syntax (e.g. valid colors, dimensions with units like 2px, 10px, and valid border shorthand like '2px solid black' or '2px solid').
+   - Disregard any accompanying HTML context markup if the user correctly wrote the requested CSS rules.
+4. SCORING & CLASSIFICATION RULES:
+   - 95-100: "Perfect" (Meets all requested styling/markup requirements with valid syntax)
+   - 85-94: "Excellent" (Meets all core requirements)
+   - 70-84: "Proficient" (Meets most requirements with minor edge case issues)
+   - 50-69: "Developing" (Partial solution, missing some key properties)
+   - 0-49: "Needs Work" (Incorrect, empty, or fails core requirements)
 
 Output ONLY valid JSON adhering to this exact schema:
 {
-  "overallScore": 90,
+  "overallScore": 95,
   "status": "Accepted",
-  "classification": "Excellent",
+  "classification": "Perfect",
   "testsPassed": 2,
   "totalTests": 2,
   "breakdown": {
-    "correctness": { "score": 45, "max": 50, "label": "Correctness" },
-    "codeQuality": { "score": 18, "max": 20, "label": "Code Quality" },
-    "structure": { "score": 9, "max": 10, "label": "Structure" },
-    "readability": { "score": 9, "max": 10, "label": "Readability" },
-    "bestPractices": { "score": 9, "max": 10, "label": "Best Practices" }
+    "correctness": { "score": 50, "max": 50, "label": "Correctness" },
+    "codeQuality": { "score": 20, "max": 20, "label": "Code Quality" },
+    "structure": { "score": 10, "max": 10, "label": "Structure" },
+    "readability": { "score": 10, "max": 10, "label": "Readability" },
+    "bestPractices": { "score": 10, "max": 10, "label": "Best Practices" }
   },
   "tests": [
     {

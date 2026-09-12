@@ -25,7 +25,7 @@ export default function DashboardPage() {
   } = useProgress();
 
   const handleStartPractice = () => {
-    const techPrefix = selectedTech === 'HTML' ? 'ht' : selectedTech === 'CSS' ? 'cs' : 'js';
+    const techPrefix = selectedTech === 'HTML' ? 'ht' : selectedTech === 'CSS' ? 'css' : 'js';
     const diffPrefix = selectedDifficulty.toLowerCase().slice(0, 3);
     const targetId = `${techPrefix}-${diffPrefix}-l${selectedLevel}-q01`;
     navigate(`/practice/${targetId}`);

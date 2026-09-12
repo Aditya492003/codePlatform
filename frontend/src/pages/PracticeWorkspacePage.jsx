@@ -34,7 +34,7 @@ export default function PracticeWorkspacePage() {
   useEffect(() => {
     let targetId = questionId;
     if (!targetId) {
-      const techPrefix = selectedTech === 'HTML' ? 'ht' : selectedTech === 'CSS' ? 'cs' : 'js';
+      const techPrefix = selectedTech === 'HTML' ? 'ht' : selectedTech === 'CSS' ? 'css' : 'js';
       const diffPrefix = selectedDifficulty.toLowerCase().slice(0, 3);
       targetId = `${techPrefix}-${diffPrefix}-l${selectedLevel}-q01`;
     }
@@ -68,7 +68,7 @@ export default function PracticeWorkspacePage() {
     if (!currentQuestion) return;
     const nextNum = currentQuestion.questionNumber + 1;
     if (nextNum <= 20) {
-      const techPrefix = selectedTech === 'HTML' ? 'ht' : selectedTech === 'CSS' ? 'cs' : 'js';
+      const techPrefix = selectedTech === 'HTML' ? 'ht' : selectedTech === 'CSS' ? 'css' : 'js';
       const diffPrefix = selectedDifficulty.toLowerCase().slice(0, 3);
       const nextId = `${techPrefix}-${diffPrefix}-l${selectedLevel}-q${String(nextNum).padStart(2, '0')}`;
       navigate(`/practice/${nextId}`);

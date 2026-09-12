@@ -126,7 +126,9 @@ export const getLeaderboard = async (req, res) => {
   try {
     const { limit = 50, skip = 0, technology } = req.query;
 
-    const query = {};
+    const query = {
+      clerkId: { $ne: 'usr_guest', $not: /^mock_/ },
+    };
     const sortField = technology ? `skillRatings.${technology}` : 'overallRating';
 
     const users = await User.find(query)

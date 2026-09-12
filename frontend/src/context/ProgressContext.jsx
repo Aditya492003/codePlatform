@@ -91,7 +91,7 @@ export function ProgressProvider({ children }) {
 
   // Synchronize question progress & unlock states with track/level and user's solved list
   useEffect(() => {
-    const techPrefix = selectedTech === 'HTML' ? 'ht' : selectedTech === 'CSS' ? 'cs' : 'js';
+    const techPrefix = selectedTech === 'HTML' ? 'ht' : selectedTech === 'CSS' ? 'css' : 'js';
     const diffPrefix = (selectedDifficulty || 'Beginner').toLowerCase().slice(0, 3);
     const prefix = `${techPrefix}-${diffPrefix}-l${selectedLevel}-q`;
 
@@ -134,7 +134,7 @@ export function ProgressProvider({ children }) {
 
       const nextNum = questionNumber + 1;
       if (nextNum <= 20) {
-        const techPrefix = selectedTech === 'HTML' ? 'ht' : selectedTech === 'CSS' ? 'cs' : 'js';
+        const techPrefix = selectedTech === 'HTML' ? 'ht' : selectedTech === 'CSS' ? 'css' : 'js';
         const diffPrefix = selectedDifficulty.toLowerCase().slice(0, 3);
         const nextId = `${techPrefix}-${diffPrefix}-l${selectedLevel}-q${String(nextNum).padStart(2, '0')}`;
 
