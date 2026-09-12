@@ -2,7 +2,6 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Award, CheckCircle2, Target, Sparkles, ArrowRight, Play } from 'lucide-react';
 import { useProgress } from '../context/ProgressContext';
-import { mockUser } from '../data/mockUser';
 import TechnologySelector from '../components/dashboard/TechnologySelector';
 import DifficultySelector from '../components/dashboard/DifficultySelector';
 import LevelSelector from '../components/dashboard/LevelSelector';
@@ -18,7 +17,8 @@ export default function DashboardPage() {
     selectedLevel,
     setSelectedLevel,
     userRating,
-    solvedCount
+    solvedCount,
+    submissions,
   } = useProgress();
 
   const handleStartPractice = () => {
@@ -26,6 +26,19 @@ export default function DashboardPage() {
     const diffPrefix = selectedDifficulty.toLowerCase().slice(0, 3);
     const targetId = `${techPrefix}-${diffPrefix}-l${selectedLevel}-q01`;
     navigate(`/practice/${targetId}`);
+  };
+
+  const skillRatings = {
+    JavaScript: userRating || 750,
+    HTML: userRating || 750,
+    CSS: userRating || 750,
+  };
+
+  const difficultyProgress = {
+    Beginner: { completed: solvedCount, total: 20, percentage: Math.min(100, Math.round((solvedCount / 20) * 100)) },
+    Medium: { completed: 0, total: 20, percentage: 0 },
+    Advanced: { completed: 0, total: 20, percentage: 0 },
+    Expert: { completed: 0, total: 20, percentage: 0 },
   };
 
   return (
@@ -60,9 +73,9 @@ export default function DashboardPage() {
             <div className="text-3xl font-extrabold font-mono text-slate-900 my-2">
               {userRating}
             </div>
-            <div className="flex items-center gap-1 text-xs text-emerald-600 font-semibold">
+            <div className="flex items-center gap-1 text-xs text-blue-600 font-semibold">
               <Award className="w-3.5 h-3.5" />
-              <span>Top 8% globally</span>
+              <span>Starting tier</span>
             </div>
           </div>
 
@@ -84,24 +97,24 @@ export default function DashboardPage() {
               Pass Accuracy
             </span>
             <div className="text-3xl font-extrabold font-mono text-slate-900 my-2">
-              {mockUser.accuracy}%
+              100%
             </div>
             <div className="flex items-center gap-1 text-xs text-emerald-600 font-semibold">
               <Target className="w-3.5 h-3.5" />
-              <span>High consistency</span>
+              <span>Verified solutions</span>
             </div>
           </div>
 
           <div className="bg-white border border-slate-200 rounded-xl p-5 shadow-xs flex flex-col justify-between">
             <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500">
-              Avg Code Quality
+              Submissions
             </span>
             <div className="text-3xl font-extrabold font-mono text-slate-900 my-2">
-              {mockUser.averageCodeQuality}
+              {submissions.length}
             </div>
             <div className="flex items-center gap-1 text-xs text-blue-600 font-semibold">
               <Sparkles className="w-3.5 h-3.5" />
-              <span>Evaluated by best practices</span>
+              <span>Recorded attempts</span>
             </div>
           </div>
         </div>
@@ -113,7 +126,7 @@ export default function DashboardPage() {
               Configure Next Assessment
             </h2>
             <p className="text-xs text-slate-500 mt-0.5">
-              Each level contains 20 progressive, unlocked challenges.
+              Each level contains progressive, unlocked challenges.
             </p>
           </div>
 
@@ -138,7 +151,7 @@ export default function DashboardPage() {
             <div className="flex items-center gap-2 text-xs font-medium text-slate-600">
               <span className="w-2 h-2 rounded-full bg-blue-600" />
               <span>
-                Selected: <strong className="text-slate-900">{selectedTech}</strong> • <strong className="text-slate-900">{selectedDifficulty}</strong> • <strong className="text-slate-900">Level {selectedLevel}</strong> (20 Challenges)
+                Selected: <strong className="text-slate-900">{selectedTech}</strong> • <strong className="text-slate-900">{selectedDifficulty}</strong> • <strong className="text-slate-900">Level {selectedLevel}</strong>
               </span>
             </div>
 
@@ -161,7 +174,7 @@ export default function DashboardPage() {
             </h3>
 
             <div className="space-y-3">
-              {Object.entries(mockUser.skillRatings).map(([tech, rating]) => (
+              {Object.entries(skillRatings).map(([tech, rating]) => (
                 <div key={tech} className="p-3 bg-slate-50 border border-slate-200 rounded-lg flex items-center justify-between">
                   <span className="font-semibold text-xs sm:text-sm text-slate-800">{tech}</span>
                   <span className="font-mono font-bold text-xs sm:text-sm text-blue-600">{rating} Rating</span>
@@ -177,7 +190,7 @@ export default function DashboardPage() {
             </h3>
 
             <div className="space-y-3">
-              {Object.entries(mockUser.difficultyProgress).map(([diff, prog]) => (
+              {Object.entries(difficultyProgress).map(([diff, prog]) => (
                 <div key={diff} className="space-y-1.5">
                   <div className="flex items-center justify-between text-xs font-semibold text-slate-700">
                     <span>{diff}</span>

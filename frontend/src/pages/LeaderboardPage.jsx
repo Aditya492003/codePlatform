@@ -1,27 +1,67 @@
-import React, { useState } from 'react';
-import { Trophy, Medal, Flame, Search, Target, CheckCircle2, Award, ArrowUpRight, Filter } from 'lucide-react';
-import { mockLeaderboard } from '../data/mockLeaderboard';
-import { mockUser } from '../data/mockUser';
+import React, { useState, useEffect } from 'react';
+import { Trophy, Flame, Search, Code2, ArrowRight } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import { useProgress } from '../context/ProgressContext';
+import { userService } from '../services/userService';
 
 export default function LeaderboardPage() {
   const { userRating, solvedCount } = useProgress();
   const [selectedTechFilter, setSelectedTechFilter] = useState('All');
   const [timeframe, setTimeframe] = useState('all-time');
   const [searchQuery, setSearchQuery] = useState('');
+  const [leaderboardData, setLeaderboardData] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
 
-  // Filter rankers
-  const filteredRankers = mockLeaderboard.filter((user) => {
-    const matchesTech =
-      selectedTechFilter === 'All' ||
-      user.primaryTech.toLowerCase() === selectedTechFilter.toLowerCase();
-    const matchesSearch =
-      user.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      user.username.toLowerCase().includes(searchQuery.toLowerCase());
-    return matchesTech && matchesSearch;
+  useEffect(() => {
+    async function loadLeaderboard() {
+      setIsLoading(true);
+      try {
+        const params = {};
+        if (selectedTechFilter !== 'All') {
+          params.technology = selectedTechFilter;
+        }
+        const data = await userService.getLeaderboard(params);
+        setLeaderboardData(Array.isArray(data) ? data : []);
+      } catch (err) {
+        console.warn('Failed to load leaderboard data:', err);
+        setLeaderboardData([]);
+      } finally {
+        setIsLoading(false);
+      }
+    }
+    loadLeaderboard();
+  }, [selectedTechFilter]);
+
+  // Filter rankers by search query
+  const filteredRankers = leaderboardData.filter((user) => {
+    const name = user.name || user.fullName || '';
+    const username = user.username || '';
+    return (
+      name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      username.toLowerCase().includes(searchQuery.toLowerCase())
+    );
   });
 
-  const topThree = mockLeaderboard.slice(0, 3);
+  const topThree = filteredRankers.slice(0, 3);
+
+  const getTierBadgeColor = (tier) => {
+    switch (tier) {
+      case 'Grandmaster':
+        return 'bg-purple-50 text-purple-700 border-purple-200';
+      case 'Master':
+        return 'bg-amber-50 text-amber-700 border-amber-200';
+      case 'Diamond':
+        return 'bg-blue-50 text-blue-700 border-blue-200';
+      case 'Platinum':
+        return 'bg-emerald-50 text-emerald-700 border-emerald-200';
+      case 'Gold':
+        return 'bg-amber-50 text-amber-800 border-amber-300';
+      case 'Silver':
+        return 'bg-slate-100 text-slate-700 border-slate-300';
+      default:
+        return 'bg-orange-50 text-orange-800 border-orange-200';
+    }
+  };
 
   return (
     <div className="flex-1 bg-[#F8F9FA] py-8 sm:py-10">
@@ -44,158 +84,161 @@ export default function LeaderboardPage() {
 
           {/* Timeframe selector */}
           <div className="flex items-center bg-white border border-slate-200 rounded-lg p-1 shadow-xs text-xs font-semibold">
-            <button
-              onClick={() => setTimeframe('all-time')}
-              className={`px-3 py-1.5 rounded-md transition-colors ${
-                timeframe === 'all-time'
-                  ? 'bg-slate-900 text-white'
-                  : 'text-slate-600 hover:text-slate-900'
-              }`}
-            >
-              All Time
-            </button>
-            <button
-              onClick={() => setTimeframe('monthly')}
-              className={`px-3 py-1.5 rounded-md transition-colors ${
-                timeframe === 'monthly'
-                  ? 'bg-slate-900 text-white'
-                  : 'text-slate-600 hover:text-slate-900'
-              }`}
-            >
-              This Month
-            </button>
-            <button
-              onClick={() => setTimeframe('weekly')}
-              className={`px-3 py-1.5 rounded-md transition-colors ${
-                timeframe === 'weekly'
-                  ? 'bg-slate-900 text-white'
-                  : 'text-slate-600 hover:text-slate-900'
-              }`}
-            >
-              This Week
-            </button>
+            {['all-time', 'monthly', 'weekly'].map((t) => (
+              <button
+                key={t}
+                onClick={() => setTimeframe(t)}
+                className={`px-3 py-1.5 rounded-md transition-colors capitalize ${
+                  timeframe === t
+                    ? 'bg-slate-900 text-white'
+                    : 'text-slate-600 hover:text-slate-900'
+                }`}
+              >
+                {t === 'all-time' ? 'All Time' : t === 'monthly' ? 'This Month' : 'This Week'}
+              </button>
+            ))}
           </div>
         </div>
 
-        {/* Top 3 Podium Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-          {/* Rank 2 (Silver) */}
-          <div className="bg-white border border-slate-200 rounded-xl p-6 shadow-xs flex flex-col items-center text-center relative order-2 md:order-1 hover:border-slate-300 transition-colors">
-            <div className="absolute top-4 left-4 w-7 h-7 rounded-full bg-slate-100 border border-slate-300 flex items-center justify-center text-xs font-mono font-bold text-slate-700">
-              #2
-            </div>
-            <div className="relative">
-              <img
-                src={topThree[1]?.avatarUrl}
-                alt={topThree[1]?.name}
-                className="w-18 h-18 rounded-full object-cover border-2 border-slate-300 shadow-xs mb-3"
-              />
-              <span className="absolute bottom-3 right-0 w-6 h-6 rounded-full bg-slate-200 border border-white flex items-center justify-center text-xs">
-                🥈
-              </span>
-            </div>
-            <h3 className="text-base font-bold text-slate-900">{topThree[1]?.name}</h3>
-            <span className="text-xs font-mono text-slate-500">@{topThree[1]?.username}</span>
-            <div className="flex items-center gap-2 mt-2">
-              <span className="text-xs px-2 py-0.5 rounded-full font-semibold bg-amber-50 text-amber-800 border border-amber-200">
-                {topThree[1]?.tier}
-              </span>
-              <span className="text-xs text-slate-400">• {topThree[1]?.country}</span>
-            </div>
-            <div className="mt-4 pt-4 border-t border-slate-100 w-full flex items-center justify-around text-xs">
-              <div>
-                <span className="text-slate-400 block text-[10px] uppercase font-bold">Rating</span>
-                <span className="font-mono font-bold text-slate-900 text-base">{topThree[1]?.rating}</span>
+        {/* Top 3 Podium Cards (Render only if we have rankers) */}
+        {topThree.length >= 3 && (
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+            {/* Rank 2 (Silver) */}
+            <div className="bg-white border border-slate-200 rounded-xl p-6 shadow-xs flex flex-col items-center text-center relative order-2 md:order-1 hover:border-slate-300 transition-colors">
+              <div className="absolute top-4 left-4 w-7 h-7 rounded-full bg-slate-100 border border-slate-300 flex items-center justify-center text-xs font-mono font-bold text-slate-700">
+                #2
               </div>
-              <div>
-                <span className="text-slate-400 block text-[10px] uppercase font-bold">Solved</span>
-                <span className="font-mono font-bold text-slate-900 text-base">{topThree[1]?.solved}</span>
+              <div className="relative">
+                <div className="w-18 h-18 rounded-full bg-slate-100 border-2 border-slate-300 shadow-xs mb-3 flex items-center justify-center font-bold text-slate-600 text-xl">
+                  {topThree[1]?.avatarUrl ? (
+                    <img
+                      src={topThree[1].avatarUrl}
+                      alt={topThree[1].name}
+                      className="w-full h-full rounded-full object-cover"
+                    />
+                  ) : (
+                    (topThree[1]?.name || 'U')[0]
+                  )}
+                </div>
+                <span className="absolute bottom-3 right-0 w-6 h-6 rounded-full bg-slate-200 border border-white flex items-center justify-center text-xs">
+                  🥈
+                </span>
               </div>
-              <div>
-                <span className="text-slate-400 block text-[10px] uppercase font-bold">Accuracy</span>
-                <span className="font-mono font-bold text-emerald-600 text-base">{topThree[1]?.accuracy}%</span>
+              <h3 className="text-base font-bold text-slate-900">{topThree[1]?.name}</h3>
+              <span className="text-xs font-mono text-slate-500">@{topThree[1]?.username}</span>
+              <div className="flex items-center gap-2 mt-2">
+                <span className={`text-xs px-2 py-0.5 rounded-full font-semibold border ${getTierBadgeColor(topThree[1]?.tier)}`}>
+                  {topThree[1]?.tier || 'Bronze'}
+                </span>
+                <span className="text-xs text-slate-400">• {topThree[1]?.country || 'Global'}</span>
+              </div>
+              <div className="mt-4 pt-4 border-t border-slate-100 w-full flex items-center justify-around text-xs">
+                <div>
+                  <span className="text-slate-400 block text-[10px] uppercase font-bold">Rating</span>
+                  <span className="font-mono font-bold text-slate-900 text-base">{topThree[1]?.rating || 750}</span>
+                </div>
+                <div>
+                  <span className="text-slate-400 block text-[10px] uppercase font-bold">Solved</span>
+                  <span className="font-mono font-bold text-slate-900 text-base">{topThree[1]?.solved || 0}</span>
+                </div>
+                <div>
+                  <span className="text-slate-400 block text-[10px] uppercase font-bold">Accuracy</span>
+                  <span className="font-mono font-bold text-emerald-600 text-base">{topThree[1]?.accuracy || 100}%</span>
+                </div>
               </div>
             </div>
-          </div>
 
-          {/* Rank 1 (Gold - Center elevated) */}
-          <div className="bg-gradient-to-b from-amber-50/50 to-white border-2 border-amber-300 rounded-xl p-6 shadow-sm flex flex-col items-center text-center relative order-1 md:order-2 md:-translate-y-2">
-            <div className="absolute top-4 left-4 w-8 h-8 rounded-full bg-amber-100 border border-amber-300 flex items-center justify-center text-xs font-mono font-bold text-amber-900">
-              #1
-            </div>
-            <div className="relative">
-              <img
-                src={topThree[0]?.avatarUrl}
-                alt={topThree[0]?.name}
-                className="w-20 h-20 rounded-full object-cover border-4 border-amber-300 shadow-md mb-3"
-              />
-              <span className="absolute bottom-3 right-0 w-7 h-7 rounded-full bg-amber-300 border-2 border-white flex items-center justify-center text-sm shadow-xs">
-                👑
-              </span>
-            </div>
-            <h3 className="text-lg font-extrabold text-slate-900">{topThree[0]?.name}</h3>
-            <span className="text-xs font-mono text-slate-500">@{topThree[0]?.username}</span>
-            <div className="flex items-center gap-2 mt-2">
-              <span className="text-xs px-2.5 py-0.5 rounded-full font-bold bg-purple-50 text-purple-700 border border-purple-200">
-                {topThree[0]?.tier}
-              </span>
-              <span className="text-xs text-slate-400">• {topThree[0]?.country}</span>
-            </div>
-            <div className="mt-4 pt-4 border-t border-amber-100 w-full flex items-center justify-around text-xs">
-              <div>
-                <span className="text-slate-400 block text-[10px] uppercase font-bold">Rating</span>
-                <span className="font-mono font-extrabold text-blue-600 text-lg">{topThree[0]?.rating}</span>
+            {/* Rank 1 (Gold) */}
+            <div className="bg-gradient-to-b from-amber-50/50 to-white border-2 border-amber-300 rounded-xl p-6 shadow-sm flex flex-col items-center text-center relative order-1 md:order-2 md:-translate-y-2">
+              <div className="absolute top-4 left-4 w-8 h-8 rounded-full bg-amber-100 border border-amber-300 flex items-center justify-center text-xs font-mono font-bold text-amber-900">
+                #1
               </div>
-              <div>
-                <span className="text-slate-400 block text-[10px] uppercase font-bold">Solved</span>
-                <span className="font-mono font-bold text-slate-900 text-base">{topThree[0]?.solved}</span>
+              <div className="relative">
+                <div className="w-20 h-20 rounded-full bg-amber-100 border-4 border-amber-300 shadow-md mb-3 flex items-center justify-center font-extrabold text-amber-700 text-2xl">
+                  {topThree[0]?.avatarUrl ? (
+                    <img
+                      src={topThree[0].avatarUrl}
+                      alt={topThree[0].name}
+                      className="w-full h-full rounded-full object-cover"
+                    />
+                  ) : (
+                    (topThree[0]?.name || 'U')[0]
+                  )}
+                </div>
+                <span className="absolute bottom-3 right-0 w-7 h-7 rounded-full bg-amber-300 border-2 border-white flex items-center justify-center text-sm shadow-xs">
+                  👑
+                </span>
               </div>
-              <div>
-                <span className="text-slate-400 block text-[10px] uppercase font-bold">Accuracy</span>
-                <span className="font-mono font-bold text-emerald-600 text-base">{topThree[0]?.accuracy}%</span>
+              <h3 className="text-lg font-extrabold text-slate-900">{topThree[0]?.name}</h3>
+              <span className="text-xs font-mono text-slate-500">@{topThree[0]?.username}</span>
+              <div className="flex items-center gap-2 mt-2">
+                <span className={`text-xs px-2.5 py-0.5 rounded-full font-bold border ${getTierBadgeColor(topThree[0]?.tier)}`}>
+                  {topThree[0]?.tier || 'Gold'}
+                </span>
+                <span className="text-xs text-slate-400">• {topThree[0]?.country || 'Global'}</span>
+              </div>
+              <div className="mt-4 pt-4 border-t border-amber-100 w-full flex items-center justify-around text-xs">
+                <div>
+                  <span className="text-slate-400 block text-[10px] uppercase font-bold">Rating</span>
+                  <span className="font-mono font-extrabold text-blue-600 text-lg">{topThree[0]?.rating || 750}</span>
+                </div>
+                <div>
+                  <span className="text-slate-400 block text-[10px] uppercase font-bold">Solved</span>
+                  <span className="font-mono font-bold text-slate-900 text-base">{topThree[0]?.solved || 0}</span>
+                </div>
+                <div>
+                  <span className="text-slate-400 block text-[10px] uppercase font-bold">Accuracy</span>
+                  <span className="font-mono font-bold text-emerald-600 text-base">{topThree[0]?.accuracy || 100}%</span>
+                </div>
               </div>
             </div>
-          </div>
 
-          {/* Rank 3 (Bronze) */}
-          <div className="bg-white border border-slate-200 rounded-xl p-6 shadow-xs flex flex-col items-center text-center relative order-3 hover:border-slate-300 transition-colors">
-            <div className="absolute top-4 left-4 w-7 h-7 rounded-full bg-orange-50 border border-orange-200 flex items-center justify-center text-xs font-mono font-bold text-orange-800">
-              #3
-            </div>
-            <div className="relative">
-              <img
-                src={topThree[2]?.avatarUrl}
-                alt={topThree[2]?.name}
-                className="w-18 h-18 rounded-full object-cover border-2 border-orange-300 shadow-xs mb-3"
-              />
-              <span className="absolute bottom-3 right-0 w-6 h-6 rounded-full bg-orange-100 border border-white flex items-center justify-center text-xs">
-                🥉
-              </span>
-            </div>
-            <h3 className="text-base font-bold text-slate-900">{topThree[2]?.name}</h3>
-            <span className="text-xs font-mono text-slate-500">@{topThree[2]?.username}</span>
-            <div className="flex items-center gap-2 mt-2">
-              <span className="text-xs px-2 py-0.5 rounded-full font-semibold bg-amber-50 text-amber-800 border border-amber-200">
-                {topThree[2]?.tier}
-              </span>
-              <span className="text-xs text-slate-400">• {topThree[2]?.country}</span>
-            </div>
-            <div className="mt-4 pt-4 border-t border-slate-100 w-full flex items-center justify-around text-xs">
-              <div>
-                <span className="text-slate-400 block text-[10px] uppercase font-bold">Rating</span>
-                <span className="font-mono font-bold text-slate-900 text-base">{topThree[2]?.rating}</span>
+            {/* Rank 3 (Bronze) */}
+            <div className="bg-white border border-slate-200 rounded-xl p-6 shadow-xs flex flex-col items-center text-center relative order-3 hover:border-slate-300 transition-colors">
+              <div className="absolute top-4 left-4 w-7 h-7 rounded-full bg-orange-50 border border-orange-200 flex items-center justify-center text-xs font-mono font-bold text-orange-800">
+                #3
               </div>
-              <div>
-                <span className="text-slate-400 block text-[10px] uppercase font-bold">Solved</span>
-                <span className="font-mono font-bold text-slate-900 text-base">{topThree[2]?.solved}</span>
+              <div className="relative">
+                <div className="w-18 h-18 rounded-full bg-orange-50 border-2 border-orange-300 shadow-xs mb-3 flex items-center justify-center font-bold text-orange-700 text-xl">
+                  {topThree[2]?.avatarUrl ? (
+                    <img
+                      src={topThree[2].avatarUrl}
+                      alt={topThree[2].name}
+                      className="w-full h-full rounded-full object-cover"
+                    />
+                  ) : (
+                    (topThree[2]?.name || 'U')[0]
+                  )}
+                </div>
+                <span className="absolute bottom-3 right-0 w-6 h-6 rounded-full bg-orange-100 border border-white flex items-center justify-center text-xs">
+                  🥉
+                </span>
               </div>
-              <div>
-                <span className="text-slate-400 block text-[10px] uppercase font-bold">Accuracy</span>
-                <span className="font-mono font-bold text-emerald-600 text-base">{topThree[2]?.accuracy}%</span>
+              <h3 className="text-base font-bold text-slate-900">{topThree[2]?.name}</h3>
+              <span className="text-xs font-mono text-slate-500">@{topThree[2]?.username}</span>
+              <div className="flex items-center gap-2 mt-2">
+                <span className={`text-xs px-2 py-0.5 rounded-full font-semibold border ${getTierBadgeColor(topThree[2]?.tier)}`}>
+                  {topThree[2]?.tier || 'Bronze'}
+                </span>
+                <span className="text-xs text-slate-400">• {topThree[2]?.country || 'Global'}</span>
+              </div>
+              <div className="mt-4 pt-4 border-t border-slate-100 w-full flex items-center justify-around text-xs">
+                <div>
+                  <span className="text-slate-400 block text-[10px] uppercase font-bold">Rating</span>
+                  <span className="font-mono font-bold text-slate-900 text-base">{topThree[2]?.rating || 750}</span>
+                </div>
+                <div>
+                  <span className="text-slate-400 block text-[10px] uppercase font-bold">Solved</span>
+                  <span className="font-mono font-bold text-slate-900 text-base">{topThree[2]?.solved || 0}</span>
+                </div>
+                <div>
+                  <span className="text-slate-400 block text-[10px] uppercase font-bold">Accuracy</span>
+                  <span className="font-mono font-bold text-emerald-600 text-base">{topThree[2]?.accuracy || 100}%</span>
+                </div>
               </div>
             </div>
           </div>
-        </div>
+        )}
 
         {/* Filters & Search Bar */}
         <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3">
@@ -229,18 +272,20 @@ export default function LeaderboardPage() {
           </div>
         </div>
 
-        {/* Your Current Rank Card */}
+        {/* Your Current Standing Card */}
         <div className="bg-blue-50/80 border border-blue-200 rounded-xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-full bg-blue-600 text-white font-mono font-bold text-xs flex items-center justify-center flex-shrink-0">
-              #1,420
+              #{solvedCount > 0 ? '1' : '-'}
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <span className="text-sm font-bold text-slate-900">Your Current Standing ({mockUser.fullName})</span>
+                <span className="text-sm font-bold text-slate-900">Your Current Standing</span>
                 <span className="text-[10px] uppercase font-bold bg-blue-200/70 text-blue-900 px-1.5 py-0.5 rounded">You</span>
               </div>
-              <span className="text-xs text-slate-600">Top 8% of all assessed engineers</span>
+              <span className="text-xs text-slate-600">
+                {solvedCount > 0 ? 'Active competitor on global leaderboard' : 'Solve your first problem to enter the rankings'}
+              </span>
             </div>
           </div>
 
@@ -254,80 +299,107 @@ export default function LeaderboardPage() {
               <span className="font-mono font-bold text-slate-900 text-base">{solvedCount}</span>
             </div>
             <div>
-              <span className="text-slate-500 block text-[10px] uppercase font-semibold">Accuracy</span>
-              <span className="font-mono font-bold text-emerald-600 text-base">{mockUser.accuracy}%</span>
+              <span className="text-slate-500 block text-[10px] uppercase font-semibold">Status</span>
+              <span className="font-mono font-bold text-emerald-600 text-base">{solvedCount > 0 ? 'Active' : 'Unranked'}</span>
             </div>
           </div>
         </div>
 
-        {/* Full Leaderboard Table */}
+        {/* Rankings Directory or Empty State */}
         <div className="bg-white border border-slate-200 rounded-xl shadow-xs overflow-hidden flex flex-col">
           <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
             <h3 className="text-sm font-bold text-slate-900">Rankings Directory</h3>
             <span className="text-xs text-slate-400 font-mono">{filteredRankers.length} Active Candidates</span>
           </div>
 
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs sm:text-sm">
-              <thead className="bg-slate-50 border-b border-slate-200 text-slate-500 uppercase font-semibold text-[11px] tracking-wider">
-                <tr>
-                  <th className="px-6 py-3 w-16">Rank</th>
-                  <th className="px-6 py-3">Engineer</th>
-                  <th className="px-6 py-3">Tier</th>
-                  <th className="px-6 py-3">Primary Tech</th>
-                  <th className="px-6 py-3">Rating</th>
-                  <th className="px-6 py-3">Solved</th>
-                  <th className="px-6 py-3">Accuracy</th>
-                  <th className="px-6 py-3">Streak</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100 font-medium">
-                {filteredRankers.map((user) => (
-                  <tr key={user.id} className="hover:bg-slate-50/80 transition-colors">
-                    <td className="px-6 py-4 font-mono font-bold text-slate-900">
-                      {user.rank === 1 ? '🥇 #1' : user.rank === 2 ? '🥈 #2' : user.rank === 3 ? '🥉 #3' : `#${user.rank}`}
-                    </td>
-                    <td className="px-6 py-4">
-                      <div className="flex items-center gap-3">
-                        <img
-                          src={user.avatarUrl}
-                          alt={user.name}
-                          className="w-8 h-8 rounded-full object-cover border border-slate-200 flex-shrink-0"
-                        />
-                        <div>
-                          <div className="font-semibold text-slate-900">{user.name}</div>
-                          <div className="text-[11px] text-slate-400">@{user.username} • {user.country}</div>
-                        </div>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4">
-                      <span className={`px-2.5 py-0.5 rounded text-xs font-semibold border ${user.tierColor}`}>
-                        {user.tier}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 text-slate-600 font-medium">
-                      {user.primaryTech}
-                    </td>
-                    <td className="px-6 py-4 font-mono font-bold text-blue-600 text-sm">
-                      {user.rating}
-                    </td>
-                    <td className="px-6 py-4 font-mono text-slate-700">
-                      {user.solved}
-                    </td>
-                    <td className="px-6 py-4 font-mono font-semibold text-emerald-600">
-                      {user.accuracy}%
-                    </td>
-                    <td className="px-6 py-4">
-                      <span className="inline-flex items-center gap-1 text-xs font-semibold text-amber-600 bg-amber-50 px-2 py-0.5 rounded border border-amber-200">
-                        <Flame className="w-3 h-3 text-amber-500 fill-amber-500" />
-                        <span>{user.streak}d</span>
-                      </span>
-                    </td>
+          {isLoading ? (
+            <div className="py-16 text-center text-slate-400 text-sm">
+              <div className="inline-block w-6 h-6 border-2 border-blue-600 border-t-transparent rounded-full animate-spin mb-2"></div>
+              <p>Loading live rankings from MongoDB Atlas...</p>
+            </div>
+          ) : filteredRankers.length === 0 ? (
+            <div className="py-16 px-6 text-center flex flex-col items-center justify-center">
+              <div className="w-14 h-14 rounded-2xl bg-amber-50 border border-amber-200 flex items-center justify-center text-amber-600 mb-4">
+                <Trophy className="w-7 h-7" />
+              </div>
+              <h4 className="text-base font-bold text-slate-900 mb-1">No Leaderboard Entries Yet</h4>
+              <p className="text-sm text-slate-500 max-w-md mb-6">
+                All dummy mock data has been purged. Be the first developer to solve challenges and claim rank #1!
+              </p>
+              <Link
+                to="/practice"
+                className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-semibold shadow-xs transition-colors"
+              >
+                <Code2 className="w-4 h-4" />
+                <span>Start Practicing Challenges</span>
+                <ArrowRight className="w-4 h-4" />
+              </Link>
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-xs sm:text-sm">
+                <thead className="bg-slate-50 border-b border-slate-200 text-slate-500 uppercase font-semibold text-[11px] tracking-wider">
+                  <tr>
+                    <th className="px-6 py-3 w-16">Rank</th>
+                    <th className="px-6 py-3">Engineer</th>
+                    <th className="px-6 py-3">Tier</th>
+                    <th className="px-6 py-3">Rating</th>
+                    <th className="px-6 py-3">Solved</th>
+                    <th className="px-6 py-3">Accuracy</th>
+                    <th className="px-6 py-3">Streak</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody className="divide-y divide-slate-100 font-medium">
+                  {filteredRankers.map((user) => (
+                    <tr key={user.id || user._id || user.username} className="hover:bg-slate-50/80 transition-colors">
+                      <td className="px-6 py-4 font-mono font-bold text-slate-900">
+                        {user.rank === 1 ? '🥇 #1' : user.rank === 2 ? '🥈 #2' : user.rank === 3 ? '🥉 #3' : `#${user.rank}`}
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="flex items-center gap-3">
+                          <div className="w-8 h-8 rounded-full bg-slate-100 border border-slate-200 flex items-center justify-center font-bold text-slate-600 text-xs">
+                            {user.avatarUrl ? (
+                              <img
+                                src={user.avatarUrl}
+                                alt={user.name}
+                                className="w-full h-full rounded-full object-cover"
+                              />
+                            ) : (
+                              (user.name || user.username || 'U')[0]
+                            )}
+                          </div>
+                          <div>
+                            <div className="font-semibold text-slate-900">{user.name || user.fullName || user.username}</div>
+                            <div className="text-[11px] text-slate-400">@{user.username} • {user.country || 'Global'}</div>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4">
+                        <span className={`px-2.5 py-0.5 rounded text-xs font-semibold border ${getTierBadgeColor(user.tier)}`}>
+                          {user.tier || 'Bronze'}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 font-mono font-bold text-blue-600 text-sm">
+                        {user.rating}
+                      </td>
+                      <td className="px-6 py-4 font-mono text-slate-700">
+                        {user.solved || user.problemsSolved || 0}
+                      </td>
+                      <td className="px-6 py-4 font-mono font-semibold text-emerald-600">
+                        {user.accuracy || 100}%
+                      </td>
+                      <td className="px-6 py-4">
+                        <span className="inline-flex items-center gap-1 text-xs font-semibold text-amber-600 bg-amber-50 px-2 py-0.5 rounded border border-amber-200">
+                          <Flame className="w-3 h-3 text-amber-500 fill-amber-500" />
+                          <span>{user.streak || 0}d</span>
+                        </span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
         </div>
       </div>
     </div>
