@@ -7,17 +7,26 @@ export const submissionService = {
   /**
    * Submit challenge attempt
    */
-  async submitAttempt(questionId, code, elapsedTime, predictAnswer = null, questionData = null) {
+  async submitAttempt(
+    questionId,
+    code,
+    elapsedTime,
+    predictAnswer = null,
+    questionData = null,
+    userId = 'usr_guest',
+    userInfo = null
+  ) {
     try {
       const res = await apiRequest('/submissions', {
         method: 'POST',
         body: JSON.stringify({
-          userId: 'usr_guest', // Will be overridden or synced with Clerk
+          userId,
           questionId,
           code,
           elapsedSeconds: elapsedTime,
           predictAnswer,
           questionData,
+          userInfo,
         }),
       });
 
@@ -25,13 +34,14 @@ export const submissionService = {
         return {
           ...res.evaluation,
           submissionId: res.submission?._id || res.evaluation.submissionId,
+          updatedUser: res.user || null,
         };
       }
     } catch (err) {
       console.warn('[submissionService] Submission error:', err.message);
     }
 
-    // Fallback if network issue
+    // Fallback if offline
     const isBlank = !code || code.trim().length < 10;
     return {
       submissionId: `sub_${Date.now()}`,
@@ -73,6 +83,7 @@ export const submissionService = {
         current: 750,
         change: 0,
       },
+      updatedUser: null,
     };
   },
 };

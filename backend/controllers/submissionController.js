@@ -51,7 +51,7 @@ export const evaluateCodeSubmission = async (req, res) => {
 };
 
 /**
- * Submit code solution & record results
+ * Submit code solution & record results, updating live User stats & leaderboard in Atlas
  * POST /api/submissions
  */
 export const createSubmission = async (req, res) => {
@@ -67,6 +67,7 @@ export const createSubmission = async (req, res) => {
       elapsedSeconds = 0,
       predictAnswer = null,
       questionData = null,
+      userInfo = null,
     } = req.body;
 
     if (!userId || !questionId) {
@@ -123,7 +124,7 @@ export const createSubmission = async (req, res) => {
     });
 
     // 3. Create Evaluation Document
-    const savedEvaluation = await Evaluation.create({
+    await Evaluation.create({
       submissionId: submission._id,
       userId,
       questionId,
@@ -143,39 +144,64 @@ export const createSubmission = async (req, res) => {
       ratingDelta: ratingChange,
     });
 
-    // 4. Update User Stats & Progress if status is Accepted
-    const user = await User.findOne({ clerkId: userId });
-    if (user) {
-      const isFirstSolve = !user.solvedQuestions.includes(questionId);
-      if (isAccepted && isFirstSolve) {
-        user.solvedQuestions.push(questionId);
-        user.problemsSolved += 1;
+    // 4. Update or Upsert User Stats & Progress in MongoDB Atlas
+    let user = await User.findOne({ clerkId: userId });
+    const todayStr = new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
 
-        if (difficulty && user.difficultyProgress[difficulty]) {
-          user.difficultyProgress[difficulty].completed = Math.min(
-            user.difficultyProgress[difficulty].total,
-            user.difficultyProgress[difficulty].completed + 1
-          );
-        }
-      }
-
-      if (technology && user.skillRatings && user.skillRatings[technology] !== undefined) {
-        user.skillRatings[technology] += ratingChange;
-      }
-      user.overallRating = Math.max(100, user.overallRating + ratingChange);
-      user.tier = user.calculateTier();
-      user.lastActiveDate = new Date();
-
-      const todayStr = new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-      const lastHistory = user.ratingHistory[user.ratingHistory.length - 1];
-      if (!lastHistory || lastHistory.date !== todayStr) {
-        user.ratingHistory.push({ date: todayStr, rating: user.overallRating });
-      } else {
-        lastHistory.rating = user.overallRating;
-      }
-
-      await user.save();
+    if (!user) {
+      user = new User({
+        clerkId: userId,
+        email: userInfo?.email || `${userId}@codeplatform.local`,
+        username: userInfo?.username || (userId.startsWith('user_') ? userId.slice(0, 10) : userId),
+        fullName: userInfo?.fullName || 'Active Developer',
+        avatarUrl: userInfo?.avatarUrl || '',
+        overallRating: 750,
+        tier: 'Bronze',
+        problemsSolved: 0,
+        skillRatings: { JavaScript: 750, HTML: 750, CSS: 750 },
+        difficultyProgress: {
+          Beginner: { completed: 0, total: 20 },
+          Medium: { completed: 0, total: 20 },
+          Advanced: { completed: 0, total: 20 },
+          Expert: { completed: 0, total: 20 },
+        },
+        ratingHistory: [{ date: todayStr, rating: 750 }],
+        solvedQuestions: [],
+      });
     }
+
+    const isFirstSolve = !user.solvedQuestions.includes(questionId);
+    if (isAccepted && isFirstSolve) {
+      user.solvedQuestions.push(questionId);
+      user.problemsSolved += 1;
+
+      const diffKey = difficulty || question?.difficulty;
+      if (diffKey && user.difficultyProgress[diffKey]) {
+        user.difficultyProgress[diffKey].completed = Math.min(
+          user.difficultyProgress[diffKey].total,
+          user.difficultyProgress[diffKey].completed + 1
+        );
+      }
+    }
+
+    const techKey = technology || question?.technology;
+    if (techKey && user.skillRatings && user.skillRatings[techKey] !== undefined) {
+      user.skillRatings[techKey] = Math.max(100, user.skillRatings[techKey] + ratingChange);
+    }
+
+    user.overallRating = Math.max(100, (user.overallRating || 750) + ratingChange);
+    user.tier = user.calculateTier();
+    user.lastActiveDate = new Date();
+
+    const lastHistory = user.ratingHistory[user.ratingHistory.length - 1];
+    if (!lastHistory || lastHistory.date !== todayStr) {
+      user.ratingHistory.push({ date: todayStr, rating: user.overallRating });
+    } else {
+      lastHistory.rating = user.overallRating;
+    }
+
+    await user.save();
+    console.log(`👤 User ${user.username} updated in Atlas: Rating ${user.overallRating} [${user.tier}], Solved: ${user.problemsSolved}`);
 
     // 5. Update Question stats
     if (question) {
@@ -194,6 +220,7 @@ export const createSubmission = async (req, res) => {
       success: true,
       submission,
       evaluation: evalResult,
+      user: user.toObject(),
     });
   } catch (error) {
     console.error('Error recording submission:', error);

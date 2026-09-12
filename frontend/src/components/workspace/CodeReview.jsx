@@ -1,20 +1,16 @@
 import React from 'react';
-import { ThumbsUp, ArrowUpRight, Sparkles } from 'lucide-react';
+import { ThumbsUp, ArrowUpRight, Sparkles, HelpCircle } from 'lucide-react';
 
 export default function CodeReview({ aiReview }) {
   if (!aiReview) return null;
 
-  const strengths = aiReview.strengths || [
-    'Clear function naming and semantic variables',
-    'Good separation of concerns across helpers',
-    'Appropriate use of immutable operations'
-  ];
+  const rawStrengths = aiReview.strengths;
+  const rawImprovements = aiReview.improvements;
 
-  const improvements = aiReview.improvements || [
-    'Extract repeated logic into dedicated helper',
-    'Improve edge-case handling for empty collections',
-    'Reduce unnecessary nesting in accumulator loops'
-  ];
+  const strengths = Array.isArray(rawStrengths) ? rawStrengths : [];
+  const improvements = Array.isArray(rawImprovements) && rawImprovements.length > 0
+    ? rawImprovements
+    : ['Implement the core function requirements according to the instructions.'];
 
   return (
     <div className="flex flex-col gap-3">
@@ -34,12 +30,19 @@ export default function CodeReview({ aiReview }) {
           </div>
 
           <ul className="space-y-2">
-            {strengths.map((item, idx) => (
-              <li key={idx} className="text-xs text-emerald-950 flex items-start gap-2 leading-relaxed">
-                <span className="text-emerald-600 font-bold mt-0.5">✓</span>
-                <span>{item}</span>
+            {strengths.length > 0 ? (
+              strengths.map((item, idx) => (
+                <li key={idx} className="text-xs text-emerald-950 flex items-start gap-2 leading-relaxed">
+                  <span className="text-emerald-600 font-bold mt-0.5">✓</span>
+                  <span>{item}</span>
+                </li>
+              ))
+            ) : (
+              <li className="text-xs text-slate-500 italic flex items-center gap-1.5">
+                <HelpCircle className="w-3.5 h-3.5 text-slate-400" />
+                <span>No strengths identified yet. Implement the solution logic to earn positive review notes.</span>
               </li>
-            ))}
+            )}
           </ul>
         </div>
 

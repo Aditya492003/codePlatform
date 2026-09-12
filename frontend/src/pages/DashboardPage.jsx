@@ -18,6 +18,9 @@ export default function DashboardPage() {
     setSelectedLevel,
     userRating,
     solvedCount,
+    tier,
+    skillRatings,
+    difficultyProgress,
     submissions,
   } = useProgress();
 
@@ -28,14 +31,14 @@ export default function DashboardPage() {
     navigate(`/practice/${targetId}`);
   };
 
-  const skillRatings = {
-    JavaScript: userRating || 750,
-    HTML: userRating || 750,
-    CSS: userRating || 750,
+  const currentSkillRatings = skillRatings || {
+    JavaScript: 750,
+    HTML: 750,
+    CSS: 750,
   };
 
-  const difficultyProgress = {
-    Beginner: { completed: solvedCount, total: 20, percentage: Math.min(100, Math.round((solvedCount / 20) * 100)) },
+  const currentDifficultyProgress = difficultyProgress || {
+    Beginner: { completed: 0, total: 20, percentage: 0 },
     Medium: { completed: 0, total: 20, percentage: 0 },
     Advanced: { completed: 0, total: 20, percentage: 0 },
     Expert: { completed: 0, total: 20, percentage: 0 },
@@ -57,7 +60,7 @@ export default function DashboardPage() {
 
           <button
             onClick={handleStartPractice}
-            className="inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-semibold shadow-xs transition-colors self-start sm:self-auto"
+            className="inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-semibold shadow-xs transition-colors self-start sm:self-auto cursor-pointer"
           >
             <Play className="w-4 h-4 fill-white" />
             <span>Continue Practice</span>
@@ -75,7 +78,7 @@ export default function DashboardPage() {
             </div>
             <div className="flex items-center gap-1 text-xs text-blue-600 font-semibold">
               <Award className="w-3.5 h-3.5" />
-              <span>Starting tier</span>
+              <span>{tier} Tier</span>
             </div>
           </div>
 
@@ -88,7 +91,7 @@ export default function DashboardPage() {
             </div>
             <div className="flex items-center gap-1 text-xs text-slate-500 font-medium">
               <CheckCircle2 className="w-3.5 h-3.5 text-blue-500" />
-              <span>Across HTML, CSS, JS</span>
+              <span>Live Atlas Records</span>
             </div>
           </div>
 
@@ -97,7 +100,9 @@ export default function DashboardPage() {
               Pass Accuracy
             </span>
             <div className="text-3xl font-extrabold font-mono text-slate-900 my-2">
-              100%
+              {submissions.length > 0
+                ? `${Math.round((submissions.filter((s) => s.status === 'Accepted').length / submissions.length) * 100)}%`
+                : '100%'}
             </div>
             <div className="flex items-center gap-1 text-xs text-emerald-600 font-semibold">
               <Target className="w-3.5 h-3.5" />
@@ -157,7 +162,7 @@ export default function DashboardPage() {
 
             <button
               onClick={handleStartPractice}
-              className="inline-flex items-center justify-center gap-2 px-6 py-2.5 bg-slate-900 hover:bg-slate-800 text-white rounded-lg text-sm font-semibold transition-colors"
+              className="inline-flex items-center justify-center gap-2 px-6 py-2.5 bg-slate-900 hover:bg-slate-800 text-white rounded-lg text-sm font-semibold transition-colors cursor-pointer"
             >
               <span>Launch Workspace</span>
               <ArrowRight className="w-4 h-4" />
@@ -174,7 +179,7 @@ export default function DashboardPage() {
             </h3>
 
             <div className="space-y-3">
-              {Object.entries(skillRatings).map(([tech, rating]) => (
+              {Object.entries(currentSkillRatings).map(([tech, rating]) => (
                 <div key={tech} className="p-3 bg-slate-50 border border-slate-200 rounded-lg flex items-center justify-between">
                   <span className="font-semibold text-xs sm:text-sm text-slate-800">{tech}</span>
                   <span className="font-mono font-bold text-xs sm:text-sm text-blue-600">{rating} Rating</span>
@@ -190,20 +195,23 @@ export default function DashboardPage() {
             </h3>
 
             <div className="space-y-3">
-              {Object.entries(difficultyProgress).map(([diff, prog]) => (
-                <div key={diff} className="space-y-1.5">
-                  <div className="flex items-center justify-between text-xs font-semibold text-slate-700">
-                    <span>{diff}</span>
-                    <span className="font-mono text-slate-500">{prog.completed}/{prog.total} ({prog.percentage}%)</span>
+              {Object.entries(currentDifficultyProgress).map(([diff, prog]) => {
+                const percentage = prog.total > 0 ? Math.min(100, Math.round((prog.completed / prog.total) * 100)) : 0;
+                return (
+                  <div key={diff} className="space-y-1.5">
+                    <div className="flex items-center justify-between text-xs font-semibold text-slate-700">
+                      <span>{diff}</span>
+                      <span className="font-mono text-slate-500">{prog.completed}/{prog.total} ({percentage}%)</span>
+                    </div>
+                    <div className="h-2 bg-slate-100 rounded-full overflow-hidden border border-slate-200/50">
+                      <div
+                        className="h-full bg-slate-900 rounded-full transition-all"
+                        style={{ width: `${percentage}%` }}
+                      />
+                    </div>
                   </div>
-                  <div className="h-2 bg-slate-100 rounded-full overflow-hidden border border-slate-200/50">
-                    <div
-                      className="h-full bg-slate-900 rounded-full transition-all"
-                      style={{ width: `${prog.percentage}%` }}
-                    />
-                  </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
         </div>

@@ -1,51 +1,31 @@
-import React, { useEffect, useState } from 'react';
-import { Award, Calendar, User as UserIcon } from 'lucide-react';
+import React from 'react';
+import { Award, Calendar } from 'lucide-react';
 import { useUser } from '@clerk/clerk-react';
 import { useProgress } from '../context/ProgressContext';
-import { userService } from '../services/userService';
 import SkillBars from '../components/profile/SkillBars';
 import RatingChart from '../components/profile/RatingChart';
 
 export default function ProfilePage() {
-  const { user: clerkUser, isLoaded } = useUser();
-  const { userRating, solvedCount, submissions } = useProgress();
-  const [profileData, setProfileData] = useState(null);
+  const { user: clerkUser } = useUser();
+  const {
+    userProfile,
+    userRating,
+    solvedCount,
+    tier,
+    skillRatings,
+    difficultyProgress,
+    ratingHistory,
+    submissions,
+  } = useProgress();
 
-  useEffect(() => {
-    async function syncAndLoadProfile() {
-      if (clerkUser) {
-        try {
-          const synced = await userService.syncUser({
-            clerkId: clerkUser.id,
-            email: clerkUser.primaryEmailAddress?.emailAddress || '',
-            fullName: clerkUser.fullName || '',
-            avatarUrl: clerkUser.imageUrl || '',
-            username: clerkUser.username || clerkUser.firstName || 'developer',
-          });
-          if (synced) {
-            setProfileData(synced);
-          }
-        } catch (err) {
-          console.warn('Error syncing profile:', err);
-        }
-      }
-    }
-    if (isLoaded && clerkUser) {
-      syncAndLoadProfile();
-    }
-  }, [clerkUser, isLoaded]);
+  const displayName = clerkUser?.fullName || userProfile?.fullName || 'Active Developer';
+  const displayUsername = clerkUser?.username || userProfile?.username || 'developer';
+  const displayAvatar = clerkUser?.imageUrl || userProfile?.avatarUrl || '';
 
-  const displayName = clerkUser?.fullName || profileData?.fullName || 'Developer';
-  const displayUsername = clerkUser?.username || profileData?.username || 'user';
-  const displayAvatar = clerkUser?.imageUrl || profileData?.avatarUrl || '';
-  const skillRatings = profileData?.skillRatings || {
-    JavaScript: 750,
-    HTML: 750,
-    CSS: 750,
-  };
-  const ratingHistory = profileData?.ratingHistory || [
-    { date: 'Initial', rating: userRating || 750 },
-  ];
+  const accuracy =
+    submissions.length > 0
+      ? Math.round((submissions.filter((s) => s.status === 'Accepted').length / submissions.length) * 100)
+      : 100;
 
   return (
     <div className="flex-1 bg-[#F8F9FA] py-8 sm:py-10">
@@ -74,12 +54,12 @@ export default function ProfilePage() {
                 </span>
               </div>
               <p className="text-xs sm:text-sm text-slate-600 font-medium">
-                Frontend Software Engineer
+                Frontend Software Engineer • {tier} Tier
               </p>
               <div className="flex items-center gap-4 text-xs text-slate-400 mt-1">
                 <span className="flex items-center gap-1">
                   <Calendar className="w-3.5 h-3.5" />
-                  Active Engineer
+                  Live MongoDB Atlas Sync
                 </span>
               </div>
             </div>
@@ -91,7 +71,7 @@ export default function ProfilePage() {
                 Platform Rating
               </span>
               <span className="text-3xl font-extrabold font-mono text-slate-900">
-                {userRating || 750}
+                {userRating}
               </span>
             </div>
             <div className="w-10 h-10 rounded-full bg-amber-50 border border-amber-200 flex items-center justify-center text-amber-600 font-bold">
@@ -116,7 +96,7 @@ export default function ProfilePage() {
               Accuracy
             </span>
             <div className="text-2xl font-extrabold font-mono text-slate-900 mt-1">
-              {solvedCount > 0 ? '100%' : '100%'}
+              {accuracy}%
             </div>
           </div>
 
@@ -134,15 +114,15 @@ export default function ProfilePage() {
               Tier Status
             </span>
             <div className="text-2xl font-extrabold font-mono text-blue-600 mt-1">
-              {profileData?.tier || 'Bronze'}
+              {tier}
             </div>
           </div>
         </div>
 
         {/* Skill Bars & Rating Progression Chart */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <SkillBars skillRatings={skillRatings} />
-          <RatingChart history={ratingHistory} />
+          <SkillBars skillRatings={skillRatings || { JavaScript: 750, HTML: 750, CSS: 750 }} />
+          <RatingChart history={ratingHistory || [{ date: 'Initial', rating: userRating || 750 }]} />
         </div>
       </div>
     </div>

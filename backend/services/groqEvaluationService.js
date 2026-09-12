@@ -37,7 +37,7 @@ export const groqCodeEvaluator = {
         status: 'Failed',
         classification: 'Needs Work',
         testsPassed: 0,
-        totalTests: (question?.examples?.length || 1) + 2,
+        totalTests: 2,
         breakdown: {
           correctness: { score: 0, max: 50, label: 'Correctness' },
           codeQuality: { score: 0, max: 20, label: 'Code Quality' },
@@ -48,27 +48,39 @@ export const groqCodeEvaluator = {
         tests: [
           {
             id: 'tc-1',
-            name: 'Code Implementation Check',
+            name: 'Code Implementation & Logic Verification',
             status: 'failed',
-            input: 'Code Submission',
-            expected: 'User-implemented functional solution',
-            actual: 'Starter code submitted without modifications',
-            error: 'No solution code written. Please implement the function before submitting.',
+            input: 'Submission Body',
+            expected: 'Custom solution logic meeting all requirements',
+            actual: 'Unmodified starter code template',
+            error: 'No solution logic written yet. Implement the required functions or styles to pass.',
+          },
+          {
+            id: 'tc-2',
+            name: 'Execution Output & Return Check',
+            status: 'failed',
+            input: 'Test Runner Output',
+            expected: 'Valid computed return value / styled output',
+            actual: 'Empty or default starter value',
+            error: 'Output could not be verified against test assertions because the code was not edited.',
           },
         ],
         aiReview: {
-          strengths: [],
+          strengths: [
+            'Template and structure loaded properly.',
+            'Environment ready for your implementation.',
+          ],
           improvements: [
             'Write the implementation logic inside the function body.',
-            'Read the requirements and examples carefully to return the expected output.',
-            'Test your solution using "Run Code" before final submission.',
+            'Review the requirements above and follow the step-by-step instructions.',
+            'Use "Run Code" to test your solution before submitting.',
           ],
         },
         codeSmells: [
           {
             line: 1,
-            message: 'Empty function body or unedited starter code template.',
-            severity: 'error',
+            message: 'Unedited starter template. Add your implementation logic.',
+            severity: 'warning',
           },
         ],
         ratingDelta: {
@@ -134,81 +146,49 @@ export const groqCodeEvaluator = {
     }
 
     // 3. AI CODE SCANNER VIA GROQ
-    const systemPrompt = `You are the Lead Code Evaluator, AST Scanner, and Automated Grading Engine for CodePlatform.
-Your role is to rigorously inspect user-submitted code for correctness, functionality, edge cases, best practices, and code smells.
-
-Evaluation Directives:
-1. STRICT TRUTH: If the code is buggy, does not satisfy requirements, has syntax errors, or returns the wrong value, DO NOT pass it. It MUST fail test cases and score low.
-2. If the user only wrote partial code or comments without actual working logic, fail the test cases.
-3. Test every example and constraint. Output individual test case results with passed/failed status, input, expected output, actual output, and error message if failed.
-4. Provide structured scoring:
-   - correctness (0 - 50)
-   - codeQuality (0 - 20)
-   - structure (0 - 10)
-   - readability (0 - 10)
-   - bestPractices (0 - 10)
-   Total overallScore = correctness + codeQuality + structure + readability + bestPractices (0 to 100).
-5. Classification must be one of: "Perfect" (95-100), "Excellent" (80-94), "Proficient" (60-79), "Developing" (40-59), "Needs Work" (0-39).
-6. Return ONLY valid JSON matching the schema below.
-
-JSON Schema:
+    const systemPrompt = `You are a Code Evaluator. Strictly test code for requirements, edge cases, and output correctness.
+If code is wrong, buggy, or does not return expected values, mark failed and score low.
+Output ONLY JSON matching:
 {
   "overallScore": 85,
   "status": "Accepted",
   "classification": "Excellent",
-  "testsPassed": 3,
-  "totalTests": 3,
+  "testsPassed": 2,
+  "totalTests": 2,
   "breakdown": {
     "correctness": { "score": 45, "max": 50, "label": "Correctness" },
-    "codeQuality": { "score": 16, "max": 20, "label": "Code Quality" },
+    "codeQuality": { "score": 15, "max": 20, "label": "Code Quality" },
     "structure": { "score": 8, "max": 10, "label": "Structure" },
-    "readability": { "score": 8, "max": 10, "label": "Readability" },
+    "readability": { "score": 9, "max": 10, "label": "Readability" },
     "bestPractices": { "score": 8, "max": 10, "label": "Best Practices" }
   },
   "tests": [
     {
       "id": "tc-1",
-      "name": "Primary return value test",
+      "name": "Correctness test",
       "status": "passed",
-      "input": "input expression",
-      "expected": "expected output",
-      "actual": "actual output",
+      "input": "input",
+      "expected": "expected",
+      "actual": "actual",
       "error": ""
     }
   ],
   "aiReview": {
-    "strengths": ["Strength 1", "Strength 2"],
-    "improvements": ["Actionable improvement 1", "Actionable improvement 2"]
+    "strengths": ["Clear logic"],
+    "improvements": ["Edge case tip"]
   },
-  "codeSmells": [
-    {
-      "line": 4,
-      "message": "Specific smell message",
-      "severity": "warning"
-    }
-  ],
-  "ratingGain": 8
+  "codeSmells": []
 }`;
 
-    const userPrompt = `Evaluate this code submission:
+    const userPrompt = `Evaluate this ${question.technology} code and return ONLY valid JSON:
+Task: ${question.title}
+Requirements: ${JSON.stringify(question.requirements || [])}
+Examples: ${JSON.stringify(question.examples || [])}
 
-### Question Specification:
-- Title: ${question.title}
-- Technology: ${question.technology}
-- Difficulty: ${question.difficulty} (Level ${question.level})
-- Description: ${question.description}
-- Requirements: ${JSON.stringify(question.requirements || [])}
-- Constraints: ${JSON.stringify(question.constraints || [])}
-- Examples: ${JSON.stringify(question.examples || [])}
-- Reference Solution:
-${question.solutionCode || '// N/A'}
-
-### User Submitted Code:
-\`\`\`${question.technology.toLowerCase()}
+User Code:
 ${cleanUserCode}
-\`\`\`
 
-Elapsed Time: ${elapsedSeconds} seconds.`;
+Return JSON format adhering to the system schema.`;
 
     try {
       const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
@@ -224,7 +204,8 @@ Elapsed Time: ${elapsedSeconds} seconds.`;
             { role: 'user', content: userPrompt },
           ],
           response_format: { type: 'json_object' },
-          temperature: 0.1, // High determinism for rigorous grading
+          max_tokens: 650,
+          temperature: 0.1,
         }),
       });
 
@@ -299,8 +280,12 @@ Elapsed Time: ${elapsedSeconds} seconds.`;
           },
         ],
         aiReview: {
-          strengths: hasLogic ? ['Basic implementation logic detected'] : [],
-          improvements: hasLogic ? ['Refine edge cases'] : ['Implement the missing logic'],
+          strengths: hasLogic
+            ? ['Basic implementation logic detected', 'Clean coding style']
+            : ['Initial structure and syntax correctly formatted'],
+          improvements: hasLogic
+            ? ['Refine edge cases and ensure optimal time complexity']
+            : ['Implement the core logic and return expected values'],
         },
         codeSmells: [],
         ratingDelta: {

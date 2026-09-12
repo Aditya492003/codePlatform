@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
-import { questionService } from '../services/questionService';
+import { useUser } from '@clerk/clerk-react';
+import { questionService, cleanCodeString } from '../services/questionService';
 import { evaluationService } from '../services/evaluationService';
 import { submissionService } from '../services/submissionService';
 import { useProgress } from './ProgressContext';
@@ -7,6 +8,7 @@ import { useProgress } from './ProgressContext';
 const WorkspaceContext = createContext(null);
 
 export function WorkspaceProvider({ children }) {
+  const { user: clerkUser } = useUser();
   const {
     selectedTech,
     selectedDifficulty,
@@ -50,7 +52,7 @@ export function WorkspaceProvider({ children }) {
 
   // Active code in editor
   const currentCode = currentQuestion
-    ? codeDrafts[currentQuestion.id] ?? currentQuestion.starterCode ?? ''
+    ? cleanCodeString(codeDrafts[currentQuestion.id] ?? currentQuestion.starterCode ?? '')
     : '';
 
   // Active PREDICT state
@@ -103,6 +105,7 @@ export function WorkspaceProvider({ children }) {
           difficulty: selectedDifficulty,
           level: selectedLevel,
           questionNumber: performanceContext.questionNumber || 1,
+          userId: clerkUser?.id || 'usr_guest',
           performanceContext,
         });
       } else {
@@ -124,7 +127,6 @@ export function WorkspaceProvider({ children }) {
         setEvaluation(null);
         setTestResults(null);
         setTimerSeconds(0);
-        // Do NOT start timer automatically - user must click Start Coding!
         setIsTimerRunning(false);
         setHasStartedCoding(false);
       }
@@ -217,7 +219,7 @@ export function WorkspaceProvider({ children }) {
   };
 
   /**
-   * Submit Challenge with real Groq AI verification
+   * Submit Challenge with real Groq AI verification and live User Sync
    */
   const submitSolution = async () => {
     if (!currentQuestion) return;
@@ -233,7 +235,16 @@ export function WorkspaceProvider({ children }) {
         currentCode,
         elapsedSeconds,
         currentPredict,
-        currentQuestion
+        currentQuestion,
+        clerkUser?.id || 'usr_guest',
+        clerkUser
+          ? {
+              email: clerkUser.primaryEmailAddress?.emailAddress || '',
+              fullName: clerkUser.fullName || '',
+              username: clerkUser.username || clerkUser.firstName || 'developer',
+              avatarUrl: clerkUser.imageUrl || '',
+            }
+          : null
       );
 
       evalResult.questionTitle = currentQuestion.title;
@@ -247,7 +258,12 @@ export function WorkspaceProvider({ children }) {
         previousQuestionTitle: currentQuestion.title,
       });
 
-      handleQuestionSubmitted(currentQuestion.id, currentQuestion.questionNumber, evalResult);
+      handleQuestionSubmitted(
+        currentQuestion.id,
+        currentQuestion.questionNumber,
+        evalResult,
+        evalResult.updatedUser
+      );
     } catch (err) {
       console.error('Submission failed:', err);
       setWorkspaceState('editing');

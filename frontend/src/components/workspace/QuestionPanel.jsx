@@ -1,6 +1,6 @@
 import React from 'react';
 import QuestionTypeBadge from '../common/QuestionTypeBadge';
-import { FileText, CheckCircle, ShieldAlert, Sparkles } from 'lucide-react';
+import { CheckCircle, ShieldAlert, Sparkles } from 'lucide-react';
 
 export default function QuestionPanel({ question }) {
   if (!question) return null;
@@ -27,7 +27,7 @@ export default function QuestionPanel({ question }) {
         <div className="flex items-center justify-between">
           <QuestionTypeBadge type={question.type} />
           <span className="text-xs font-mono text-slate-400">
-            Est. ~{question.estimatedTime || 10} mins
+            Est. ~{question.estimatedTime || 5} mins
           </span>
         </div>
 
@@ -84,41 +84,6 @@ export default function QuestionPanel({ question }) {
               </li>
             ))}
           </ul>
-        </div>
-      )}
-
-      {/* Examples */}
-      {question.examples && question.examples.length > 0 && (
-        <div className="flex flex-col gap-3">
-          <div className="flex items-center gap-1.5 text-xs font-bold text-slate-800 uppercase tracking-wider">
-            <FileText className="w-3.5 h-3.5 text-slate-600" />
-            <span>Examples</span>
-          </div>
-          <div className="space-y-3">
-            {question.examples.map((ex, idx) => (
-              <div
-                key={idx}
-                className="bg-slate-50 border border-slate-200 rounded-lg p-3.5 text-xs font-mono flex flex-col gap-2"
-              >
-                <div>
-                  <span className="text-slate-400 uppercase font-semibold text-[10px] block mb-1">
-                    Input / Context
-                  </span>
-                  <div className="text-slate-800 bg-white p-2 rounded border border-slate-200 whitespace-pre-wrap">
-                    {ex.input}
-                  </div>
-                </div>
-                <div>
-                  <span className="text-slate-400 uppercase font-semibold text-[10px] block mb-1">
-                    Expected Output
-                  </span>
-                  <div className="text-emerald-700 bg-emerald-50/50 p-2 rounded border border-emerald-200 whitespace-pre-wrap">
-                    {ex.output}
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
         </div>
       )}
 

@@ -34,7 +34,6 @@ const EvaluationSchema = new mongoose.Schema(
     },
     classification: {
       type: String,
-      enum: ['Needs Work', 'Developing', 'Proficient', 'Excellent', 'Perfect'],
       default: 'Proficient',
     },
     criteriaScores: {
