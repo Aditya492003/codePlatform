@@ -1,5 +1,5 @@
 import React from 'react';
-import { Play, Send, RotateCcw, Clock, CheckCircle2, Loader2 } from 'lucide-react';
+import { Play, Send, RotateCcw, Clock, CheckCircle2, Loader2, Pause } from 'lucide-react';
 import { useWorkspace } from '../../context/WorkspaceContext';
 import { useProgress } from '../../context/ProgressContext';
 
@@ -8,9 +8,12 @@ export default function ChallengeHeader() {
     currentQuestion,
     workspaceState,
     timerSeconds,
+    isTimerRunning,
+    hasStartedCoding,
+    startCodingSession,
     resetCode,
     runCode,
-    submitSolution
+    submitSolution,
   } = useWorkspace();
 
   const { selectedTech, selectedDifficulty, selectedLevel } = useProgress();
@@ -58,7 +61,13 @@ export default function ChallengeHeader() {
         <Clock className="w-3.5 h-3.5 text-slate-400" />
         <span>{formatTimer(timerSeconds)}</span>
         {!isSubmitted && (
-          <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" title="Session in progress" />
+          isTimerRunning ? (
+            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" title="Clock running" />
+          ) : (
+            <span className="text-[10px] text-amber-600 font-sans font-bold uppercase bg-amber-50 px-1.5 py-0.2 rounded border border-amber-200">
+              Ready
+            </span>
+          )
         )}
       </div>
 
@@ -69,6 +78,14 @@ export default function ChallengeHeader() {
             <CheckCircle2 className="w-4 h-4 text-emerald-600" />
             <span>Challenge Submitted</span>
           </div>
+        ) : !hasStartedCoding ? (
+          <button
+            onClick={startCodingSession}
+            className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-md text-xs sm:text-sm font-semibold bg-blue-600 hover:bg-blue-700 text-white transition-colors shadow-xs cursor-pointer"
+          >
+            <Play className="w-3.5 h-3.5 fill-white" />
+            <span>Start Coding</span>
+          </button>
         ) : (
           <>
             <button

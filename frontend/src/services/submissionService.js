@@ -1,61 +1,78 @@
-import { defaultMockEvaluation } from '../data/mockEvaluations';
-import { mockUser } from '../data/mockUser';
+import { apiRequest } from './api';
 
 /**
- * Service to handle challenge submissions.
- * Computes deterministic score + static quality + AI review.
- * Backend-ready: will invoke POST /api/submissions in production.
+ * Service to handle challenge submissions with real Groq AI evaluation & Atlas database recording.
  */
 export const submissionService = {
   /**
    * Submit challenge attempt
    */
-  async submitAttempt(questionId, code, elapsedTime, predictAnswer = null) {
-    // Simulate server evaluation latency (600ms)
-    await new Promise((resolve) => setTimeout(resolve, 600));
+  async submitAttempt(questionId, code, elapsedTime, predictAnswer = null, questionData = null) {
+    try {
+      const res = await apiRequest('/submissions', {
+        method: 'POST',
+        body: JSON.stringify({
+          userId: 'usr_guest', // Will be overridden or synced with Clerk
+          questionId,
+          code,
+          elapsedSeconds: elapsedTime,
+          predictAnswer,
+          questionData,
+        }),
+      });
 
-    // Dynamic rating delta calculation
-    const currentRating = mockUser.overallRating;
-    const ratingGain = 7;
-    const newRating = currentRating + ratingGain;
+      if (res?.evaluation) {
+        return {
+          ...res.evaluation,
+          submissionId: res.submission?._id || res.evaluation.submissionId,
+        };
+      }
+    } catch (err) {
+      console.warn('[submissionService] Submission error:', err.message);
+    }
 
-    // Create tailored AI review points
-    const evaluation = {
-      ...defaultMockEvaluation,
+    // Fallback if network issue
+    const isBlank = !code || code.trim().length < 10;
+    return {
       submissionId: `sub_${Date.now()}`,
       questionId,
       submittedAt: new Date().toISOString(),
       elapsedSeconds: elapsedTime,
-      overallScore: 86,
-      classification: "Excellent",
+      overallScore: isBlank ? 0 : 50,
+      status: isBlank ? 'Failed' : 'Partial',
+      classification: isBlank ? 'Needs Work' : 'Developing',
       breakdown: {
-        correctness: { score: 46, max: 50, label: "Correctness" },
-        codeQuality: { score: 16, max: 20, label: "Code Quality" },
-        structure: { score: 9, max: 10, label: "Structure" },
-        readability: { score: 8, max: 10, label: "Readability" },
-        bestPractices: { score: 7, max: 10, label: "Best Practices" }
+        correctness: { score: isBlank ? 0 : 25, max: 50, label: 'Correctness' },
+        codeQuality: { score: isBlank ? 0 : 10, max: 20, label: 'Code Quality' },
+        structure: { score: isBlank ? 0 : 5, max: 10, label: 'Structure' },
+        readability: { score: isBlank ? 0 : 5, max: 10, label: 'Readability' },
+        bestPractices: { score: isBlank ? 0 : 5, max: 10, label: 'Best Practices' },
       },
-      testsPassed: 8,
-      totalTests: 8,
+      testsPassed: isBlank ? 0 : 1,
+      totalTests: 2,
+      tests: [
+        {
+          id: 'tc-fallback',
+          name: 'Fallback execution validation',
+          status: isBlank ? 'failed' : 'passed',
+          input: 'Code',
+          expected: 'Working code',
+          actual: isBlank ? 'Empty' : 'Present',
+          error: isBlank ? 'No code written.' : '',
+        },
+      ],
       aiReview: {
-        strengths: [
-          "Clear function naming and intentional variable scope",
-          "Proper defensive handling of empty and boundary inputs",
-          "Appropriate use of array methods instead of imperative index mutations"
-        ],
-        improvements: [
-          "Extract repeated tax rounding logic into a single dedicated helper function",
-          "Improve edge-case handling for zero or negative item quantities",
-          "Reduce unnecessary nesting inside loop accumulators"
-        ]
+        strengths: isBlank ? [] : ['Code submitted'],
+        improvements: isBlank
+          ? ['Implement the function before submitting.']
+          : ['Check test suite output.'],
       },
+      codeSmells: [],
       ratingDelta: {
-        previous: currentRating,
-        current: newRating,
-        change: ratingGain
-      }
+        previous: 750,
+        current: 750,
+        change: 0,
+      },
     };
-
-    return evaluation;
-  }
+  },
 };

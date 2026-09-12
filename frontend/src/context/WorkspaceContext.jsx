@@ -13,7 +13,7 @@ export function WorkspaceProvider({ children }) {
     selectedLevel,
     getQuestionStatus,
     handleQuestionSubmitted,
-    completedEvaluations
+    completedEvaluations,
   } = useProgress();
 
   // Current question data
@@ -23,26 +23,30 @@ export function WorkspaceProvider({ children }) {
   // In-memory code drafts per question ID
   const [codeDrafts, setCodeDrafts] = useState({});
 
-  // In-memory PREDICT answers per question ID: { selectedOptionId, explanation }
+  // In-memory PREDICT answers per question ID
   const [predictAnswers, setPredictAnswers] = useState({});
 
   // Workspace state: 'ready' | 'editing' | 'running' | 'test_results' | 'submitting' | 'evaluated' | 'completed'
   const [workspaceState, setWorkspaceState] = useState('ready');
 
-  // Test suite execution results (from Run Code)
+  // Test suite execution results
   const [testResults, setTestResults] = useState(null);
 
-  // Final evaluation result (from Submit)
+  // Final evaluation result
   const [evaluation, setEvaluation] = useState(null);
 
-  // Inline non-intrusive feedback notice (e.g. "Complete this challenge before continuing.")
+  // Inline notice
   const [noticeMessage, setNoticeMessage] = useState(null);
   const noticeTimeoutRef = useRef(null);
 
-  // Timer state
+  // Timer state - does NOT auto-start until user begins coding!
   const [timerSeconds, setTimerSeconds] = useState(0);
   const [isTimerRunning, setIsTimerRunning] = useState(false);
+  const [hasStartedCoding, setHasStartedCoding] = useState(false);
   const timerIntervalRef = useRef(null);
+
+  // Last completed attempt metrics for AI adaptation
+  const [lastAttemptMetrics, setLastAttemptMetrics] = useState(null);
 
   // Active code in editor
   const currentCode = currentQuestion
@@ -69,32 +73,62 @@ export function WorkspaceProvider({ children }) {
   }, [isTimerRunning]);
 
   /**
-   * Load a specific question by ID into workspace
+   * Explicitly starts the coding session and runs the clock
    */
-  const loadQuestion = async (questionId) => {
+  const startCodingSession = () => {
+    if (!hasStartedCoding) {
+      setHasStartedCoding(true);
+      setIsTimerRunning(true);
+      if (workspaceState === 'ready') {
+        setWorkspaceState('editing');
+      }
+    }
+  };
+
+  /**
+   * Load a specific question into workspace
+   */
+  const loadQuestion = async (questionId, performanceContext = null) => {
     setIsLoadingQuestion(true);
     setNoticeMessage(null);
+    setIsTimerRunning(false);
+    setHasStartedCoding(false);
+    setTimerSeconds(0);
 
     try {
-      const q = await questionService.getQuestionById(questionId);
+      let q;
+      if (performanceContext) {
+        q = await questionService.getAdaptiveNextQuestion({
+          technology: selectedTech,
+          difficulty: selectedDifficulty,
+          level: selectedLevel,
+          questionNumber: performanceContext.questionNumber || 1,
+          performanceContext,
+        });
+      } else {
+        q = await questionService.getQuestionById(questionId);
+      }
+
       setCurrentQuestion(q);
 
-      // Check if already submitted
-      const isSubmitted = completedEvaluations[q.id] || getQuestionStatus(q.id, q.questionNumber) === 'submitted';
+      const isSubmitted =
+        completedEvaluations[q.id] || getQuestionStatus(q.id, q.questionNumber) === 'submitted';
 
       if (isSubmitted) {
         setWorkspaceState('completed');
         setEvaluation(completedEvaluations[q.id] || null);
         setIsTimerRunning(false);
+        setHasStartedCoding(true);
       } else {
         setWorkspaceState('ready');
         setEvaluation(null);
         setTestResults(null);
-        // Start or resume timer
-        setIsTimerRunning(true);
+        setTimerSeconds(0);
+        // Do NOT start timer automatically - user must click Start Coding!
+        setIsTimerRunning(false);
+        setHasStartedCoding(false);
       }
 
-      // Initialize code draft if empty
       setCodeDrafts((prev) => {
         if (prev[q.id] === undefined) {
           return { ...prev, [q.id]: q.starterCode || '' };
@@ -109,13 +143,19 @@ export function WorkspaceProvider({ children }) {
   };
 
   /**
-   * Update code draft in memory (preserves changes during navigation)
+   * Update code draft in memory & start clock if user starts typing
    */
   const updateCode = (newCode) => {
     if (!currentQuestion) return;
+
+    if (!hasStartedCoding) {
+      setHasStartedCoding(true);
+      setIsTimerRunning(true);
+    }
+
     setCodeDrafts((prev) => ({
       ...prev,
-      [currentQuestion.id]: newCode
+      [currentQuestion.id]: newCode,
     }));
     if (workspaceState === 'ready') {
       setWorkspaceState('editing');
@@ -127,12 +167,20 @@ export function WorkspaceProvider({ children }) {
    */
   const updatePredictAnswer = (optionId, explanation) => {
     if (!currentQuestion) return;
+
+    if (!hasStartedCoding) {
+      setHasStartedCoding(true);
+      setIsTimerRunning(true);
+    }
+
     setPredictAnswers((prev) => ({
       ...prev,
       [currentQuestion.id]: {
-        selectedOptionId: optionId !== undefined ? optionId : prev[currentQuestion.id]?.selectedOptionId,
-        explanation: explanation !== undefined ? explanation : prev[currentQuestion.id]?.explanation || ''
-      }
+        selectedOptionId:
+          optionId !== undefined ? optionId : prev[currentQuestion.id]?.selectedOptionId,
+        explanation:
+          explanation !== undefined ? explanation : prev[currentQuestion.id]?.explanation || '',
+      },
     }));
     if (workspaceState === 'ready') {
       setWorkspaceState('editing');
@@ -146,12 +194,12 @@ export function WorkspaceProvider({ children }) {
     if (!currentQuestion) return;
     setCodeDrafts((prev) => ({
       ...prev,
-      [currentQuestion.id]: currentQuestion.starterCode || ''
+      [currentQuestion.id]: currentQuestion.starterCode || '',
     }));
   };
 
   /**
-   * Run Code (Unit tests only — does NOT submit, does NOT change rating, does NOT unlock)
+   * Run Code (Unit tests only via live Groq AI AST scanner)
    */
   const runCode = async () => {
     if (!currentQuestion) return;
@@ -159,7 +207,7 @@ export function WorkspaceProvider({ children }) {
     setNoticeMessage(null);
 
     try {
-      const results = await evaluationService.runTests(currentQuestion.id, currentCode);
+      const results = await evaluationService.runTests(currentQuestion.id, currentCode, currentQuestion);
       setTestResults(results);
       setWorkspaceState('test_results');
     } catch (err) {
@@ -169,7 +217,7 @@ export function WorkspaceProvider({ children }) {
   };
 
   /**
-   * Submit Challenge (Evaluates, calculates scores & AI review, updates rating, marks submitted & unlocks next)
+   * Submit Challenge with real Groq AI verification
    */
   const submitSolution = async () => {
     if (!currentQuestion) return;
@@ -177,21 +225,28 @@ export function WorkspaceProvider({ children }) {
     setIsTimerRunning(false);
     setNoticeMessage(null);
 
+    const elapsedSeconds = timerSeconds;
+
     try {
       const evalResult = await submissionService.submitAttempt(
         currentQuestion.id,
         currentCode,
-        timerSeconds,
-        currentPredict
+        elapsedSeconds,
+        currentPredict,
+        currentQuestion
       );
 
-      // Attach question title for reference
       evalResult.questionTitle = currentQuestion.title;
 
       setEvaluation(evalResult);
       setWorkspaceState('evaluated');
 
-      // Update progress state
+      setLastAttemptMetrics({
+        previousTimeSeconds: elapsedSeconds,
+        previousScore: evalResult.overallScore,
+        previousQuestionTitle: currentQuestion.title,
+      });
+
       handleQuestionSubmitted(currentQuestion.id, currentQuestion.questionNumber, evalResult);
     } catch (err) {
       console.error('Submission failed:', err);
@@ -200,9 +255,6 @@ export function WorkspaceProvider({ children }) {
     }
   };
 
-  /**
-   * Display non-intrusive inline notice
-   */
   const showNotice = (msg) => {
     if (noticeTimeoutRef.current) clearTimeout(noticeTimeoutRef.current);
     setNoticeMessage(msg);
@@ -228,7 +280,10 @@ export function WorkspaceProvider({ children }) {
         evaluation,
         timerSeconds,
         isTimerRunning,
+        hasStartedCoding,
         noticeMessage,
+        lastAttemptMetrics,
+        startCodingSession,
         loadQuestion,
         updateCode,
         updatePredictAnswer,
@@ -236,7 +291,7 @@ export function WorkspaceProvider({ children }) {
         runCode,
         submitSolution,
         showNotice,
-        clearNotice
+        clearNotice,
       }}
     >
       {children}

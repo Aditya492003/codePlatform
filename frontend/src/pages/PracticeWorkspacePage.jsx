@@ -9,7 +9,7 @@ import PredictAnswerView from '../components/workspace/PredictAnswerView';
 import TestResults from '../components/workspace/TestResults';
 import EvaluationPanel from '../components/workspace/EvaluationPanel';
 import QuestionNavigator from '../components/workspace/QuestionNavigator';
-import { Loader2 } from 'lucide-react';
+import { Sparkles, Loader2, Cpu } from 'lucide-react';
 
 export default function PracticeWorkspacePage() {
   const { questionId } = useParams();
@@ -20,20 +20,20 @@ export default function PracticeWorkspacePage() {
     isLoadingQuestion,
     loadQuestion,
     workspaceState,
-    evaluation
+    evaluation,
+    lastAttemptMetrics,
   } = useWorkspace();
 
   const {
     selectedTech,
     selectedDifficulty,
-    selectedLevel
+    selectedLevel,
   } = useProgress();
 
   // Load question on mount or URL change
   useEffect(() => {
     let targetId = questionId;
     if (!targetId) {
-      // Default to Question 01 of active selection
       const techPrefix = selectedTech === 'JavaScript' ? 'js' : selectedTech.toLowerCase();
       const diffPrefix = selectedDifficulty.toLowerCase().slice(0, 3);
       targetId = `${techPrefix}-${diffPrefix}-l${selectedLevel}-q01`;
@@ -43,9 +43,21 @@ export default function PracticeWorkspacePage() {
 
   if (isLoadingQuestion && !currentQuestion) {
     return (
-      <div className="flex-1 flex flex-col items-center justify-center bg-[#F8F9FA] text-slate-500 gap-3">
-        <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
-        <span className="text-sm font-medium">Loading challenge workspace...</span>
+      <div className="flex-1 flex flex-col items-center justify-center bg-[#F8F9FA] text-slate-600 gap-4 p-6 text-center">
+        <div className="relative">
+          <div className="w-16 h-16 rounded-2xl bg-gradient-to-tr from-blue-600 to-indigo-600 flex items-center justify-center text-white shadow-lg shadow-blue-500/20 animate-pulse">
+            <Cpu className="w-8 h-8" />
+          </div>
+          <Sparkles className="w-5 h-5 text-amber-400 absolute -top-1 -right-1 animate-bounce" />
+        </div>
+        <div className="flex flex-col items-center gap-1.5 max-w-sm">
+          <h3 className="text-base font-bold text-slate-900">
+            Groq AI Adaptive Intelligence
+          </h3>
+          <p className="text-xs text-slate-500">
+            Calibrating challenge difficulty, code scaffolding, and cognitive depth to your performance...
+          </p>
+        </div>
       </div>
     );
   }
@@ -60,7 +72,10 @@ export default function PracticeWorkspacePage() {
       const diffPrefix = selectedDifficulty.toLowerCase().slice(0, 3);
       const nextId = `${techPrefix}-${diffPrefix}-l${selectedLevel}-q${String(nextNum).padStart(2, '0')}`;
       navigate(`/practice/${nextId}`);
-      loadQuestion(nextId);
+      loadQuestion(nextId, {
+        questionNumber: nextNum,
+        ...(lastAttemptMetrics || {}),
+      });
     }
   };
 

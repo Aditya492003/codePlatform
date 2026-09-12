@@ -1,4 +1,5 @@
 import Question from '../models/Question.js';
+import { groqQuestionGenerator } from '../services/groqService.js';
 
 /**
  * Get all questions with flexible filtering
@@ -34,7 +35,7 @@ export const getQuestions = async (req, res) => {
 };
 
 /**
- * Get single question by slug or ID
+ * Get single question by slug or ID, or dynamically generate on-demand if not found
  * GET /api/questions/:id
  */
 export const getQuestionById = async (req, res) => {
@@ -44,6 +45,27 @@ export const getQuestionById = async (req, res) => {
     let question = await Question.findOne({ slug: id });
     if (!question && id.match(/^[0-9a-fA-F]{24}$/)) {
       question = await Question.findById(id);
+    }
+
+    if (!question) {
+      // If it looks like a structured slug like "js-beg-l1-q01", attempt on-demand AI generation
+      const parts = id.split('-');
+      if (parts.length >= 4) {
+        const techMap = { js: 'JavaScript', ht: 'HTML', html: 'HTML', cs: 'CSS', css: 'CSS' };
+        const diffMap = { beg: 'Beginner', med: 'Medium', adv: 'Advanced', exp: 'Expert' };
+        const tech = techMap[parts[0].toLowerCase()] || 'JavaScript';
+        const diff = diffMap[parts[1].toLowerCase()] || 'Beginner';
+        const lvl = parseInt(parts[2].replace('l', ''), 10) || 1;
+        const qNum = parseInt(parts[3].replace('q', ''), 10) || 1;
+
+        console.log(`🤖 Question ${id} not found in DB. Triggering on-demand Groq AI generation for ${tech} ${diff} L${lvl}...`);
+        question = await groqQuestionGenerator.generateAdaptiveQuestion({
+          technology: tech,
+          difficulty: diff,
+          level: lvl,
+          questionNumber: qNum,
+        });
+      }
     }
 
     if (!question) {
@@ -57,6 +79,50 @@ export const getQuestionById = async (req, res) => {
   } catch (error) {
     console.error('Error fetching question:', error);
     res.status(500).json({ success: false, message: 'Server error fetching question', error: error.message });
+  }
+};
+
+/**
+ * Dynamically generate an adaptive AI question using Groq openai/gpt-oss-120b
+ * POST /api/questions/generate
+ */
+export const generateAdaptiveQuestion = async (req, res) => {
+  try {
+    const {
+      technology = 'JavaScript',
+      difficulty = 'Beginner',
+      level = 1,
+      questionNumber = 1,
+      userId = 'usr_guest',
+      performanceContext = {},
+    } = req.body;
+
+    console.log(`🧠 Generating adaptive question with Groq AI for User: ${userId} (${technology}, ${difficulty}, L${level}, Q${questionNumber})`);
+    if (performanceContext.previousTimeSeconds) {
+      console.log(`⏱️ User's previous solve time: ${performanceContext.previousTimeSeconds}s, score: ${performanceContext.previousScore}`);
+    }
+
+    const question = await groqQuestionGenerator.generateAdaptiveQuestion({
+      technology,
+      difficulty,
+      level: Number(level),
+      questionNumber: Number(questionNumber),
+      userId,
+      performanceContext,
+    });
+
+    res.status(200).json({
+      success: true,
+      message: 'Adaptive question generated successfully via Groq AI',
+      data: question,
+    });
+  } catch (error) {
+    console.error('Failed to generate adaptive question:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to generate question with AI',
+      error: error.message,
+    });
   }
 };
 
@@ -78,7 +144,7 @@ export const createQuestion = async (req, res) => {
 };
 
 /**
- * Batch insert or upsert questions (for seeder or bulk imports)
+ * Batch insert or upsert questions
  * POST /api/questions/bulk
  */
 export const bulkUpsertQuestions = async (req, res) => {
