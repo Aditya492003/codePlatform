@@ -36,17 +36,17 @@ export default function ChallengeHeader() {
       {/* Left: Metadata Hierarchy */}
       <div className="flex items-center gap-3">
         <span className="text-xs sm:text-sm font-semibold text-slate-900 flex items-center gap-1.5">
-          {selectedTech}
+          {currentQuestion?.technology || selectedTech}
         </span>
 
         <span className="w-px h-4 bg-slate-200" />
 
         <span className="text-xs font-semibold px-2 py-0.5 rounded bg-slate-100 text-slate-600 border border-slate-200">
-          {selectedDifficulty}
+          {currentQuestion?.difficulty || selectedDifficulty}
         </span>
 
         <span className="text-xs text-slate-500 font-medium hidden sm:inline">
-          Level {selectedLevel}
+          Level {currentQuestion?.level || selectedLevel}
         </span>
 
         <span className="w-px h-4 bg-slate-200 hidden sm:inline" />

@@ -1,6 +1,73 @@
 import React, { useState } from 'react';
 import QuestionTypeBadge from '../common/QuestionTypeBadge';
-import { CheckCircle, ShieldAlert, Sparkles, Lightbulb, Eye, EyeOff, Copy, Check, Code2 } from 'lucide-react';
+import {
+  CheckCircle,
+  ShieldAlert,
+  Sparkles,
+  Lightbulb,
+  Eye,
+  EyeOff,
+  Copy,
+  Check,
+  Code2,
+  Bug,
+  HelpCircle,
+  Hammer,
+  FileCode,
+  Tag
+} from 'lucide-react';
+
+const TYPE_THEMES = {
+  MCQ: {
+    border: 'border-indigo-100',
+    bg: 'bg-indigo-50/40',
+    badgeText: 'Multiple Choice Concept Check',
+    icon: HelpCircle,
+    iconColor: 'text-indigo-600',
+  },
+  PREDICT_OUTPUT: {
+    border: 'border-emerald-100',
+    bg: 'bg-emerald-50/40',
+    badgeText: 'Execution Output Prediction',
+    icon: Sparkles,
+    iconColor: 'text-emerald-600',
+  },
+  PREDICT: {
+    border: 'border-emerald-100',
+    bg: 'bg-emerald-50/40',
+    badgeText: 'Execution Output Prediction',
+    icon: Sparkles,
+    iconColor: 'text-emerald-600',
+  },
+  FIX_CODE: {
+    border: 'border-rose-100',
+    bg: 'bg-rose-50/40',
+    badgeText: 'Bug Resolution & Code Fix',
+    icon: Bug,
+    iconColor: 'text-rose-600',
+  },
+  DEBUG: {
+    border: 'border-rose-100',
+    bg: 'bg-rose-50/40',
+    badgeText: 'Debugging & Fix Challenge',
+    icon: Bug,
+    iconColor: 'text-rose-600',
+  },
+  CODING: {
+    border: 'border-blue-100',
+    bg: 'bg-blue-50/40',
+    badgeText: 'Core Algorithm & Implementation',
+    icon: Code2,
+    iconColor: 'text-blue-600',
+  },
+  BUILD: {
+    border: 'border-sky-100',
+    bg: 'bg-sky-50/40',
+    badgeText: 'Component & Feature Construction',
+    icon: Hammer,
+    iconColor: 'text-sky-600',
+  },
+};
 
 export default function QuestionPanel({ question }) {
   const [showSolution, setShowSolution] = useState(false);
@@ -8,12 +75,17 @@ export default function QuestionPanel({ question }) {
 
   if (!question) return null;
 
-  const isPredictOrMcq =
-    question.type === 'PREDICT' ||
-    question.type === 'PREDICT_OUTPUT' ||
-    question.type === 'MCQ';
+  const normalizedType = (question.type || 'BUILD').toUpperCase();
+  const theme = TYPE_THEMES[normalizedType] || TYPE_THEMES.BUILD;
+  const TypeIcon = theme.icon;
 
-  const codeSnippet = question.predictConfig?.snippet || (isPredictOrMcq ? question.starterCode : null);
+  const isPredictOrMcq =
+    normalizedType === 'PREDICT' ||
+    normalizedType === 'PREDICT_OUTPUT' ||
+    normalizedType === 'MCQ';
+
+  const codeSnippet =
+    question.predictConfig?.snippet || (isPredictOrMcq ? question.starterCode : null);
 
   const hasSolution = Boolean(
     question.solutionCode ||
@@ -30,9 +102,7 @@ export default function QuestionPanel({ question }) {
     }
   };
 
-  // Anti-copy event handlers scoped exclusively to this container
   const handlePreventCopy = (e) => {
-    // Only allow copying from the revealed solution box if explicitly clicking copy button
     if (!e.target.closest('.solution-allow-copy')) {
       e.preventDefault();
     }
@@ -44,29 +114,44 @@ export default function QuestionPanel({ question }) {
 
   return (
     <div
-      className="bg-white overflow-y-auto p-6 lg:p-8 flex flex-col gap-6 anti-copy-question select-none"
+      key={question.id || question.slug}
+      className="bg-white overflow-y-auto p-6 lg:p-8 flex flex-col gap-6 anti-copy-question select-none animate-in fade-in duration-200"
       onCopy={handlePreventCopy}
       onCut={handlePreventCopy}
       onContextMenu={handleContextMenu}
       onDragStart={handlePreventCopy}
     >
-      {/* Header Info */}
-      <div className="flex flex-col gap-3">
+      {/* Header Info & Type Callout Banner */}
+      <div className="flex flex-col gap-3.5">
         <div className="flex items-center justify-between">
-          <QuestionTypeBadge type={question.type} />
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2">
+            <QuestionTypeBadge type={question.type} />
+            <span className="text-[11px] font-mono text-slate-400 hidden sm:inline">
+              Track: {question.technology} • L{question.level}
+            </span>
+          </div>
+
+          <div className="flex items-center gap-2">
             {question.points && (
-              <span className="text-xs font-mono font-bold text-amber-600 bg-amber-50 px-2 py-0.5 rounded border border-amber-200">
+              <span className="text-xs font-mono font-bold text-amber-700 bg-amber-50 px-2.5 py-0.5 rounded-full border border-amber-200 shadow-2xs">
                 +{question.points} pts
               </span>
             )}
             <span className="text-xs font-mono text-slate-400">
-              Est. ~{question.estimatedTime || 5} mins
+              ~{question.estimatedTime || 5} min
             </span>
           </div>
         </div>
 
-        <h1 className="text-xl lg:text-2xl font-bold text-slate-900 tracking-tight leading-tight">
+        {/* Dynamic Category Hero Tag */}
+        <div className={`p-3 rounded-xl border flex items-center gap-2.5 ${theme.bg} ${theme.border}`}>
+          <TypeIcon className={`w-4 h-4 ${theme.iconColor} flex-shrink-0`} />
+          <span className="text-xs font-bold uppercase tracking-wider text-slate-700">
+            {theme.badgeText}
+          </span>
+        </div>
+
+        <h1 className="text-xl lg:text-2xl font-black text-slate-900 tracking-tight leading-snug">
           {question.title}
         </h1>
 
@@ -76,13 +161,14 @@ export default function QuestionPanel({ question }) {
 
         {question.concepts && question.concepts.length > 0 && (
           <div className="flex flex-wrap items-center gap-1.5 pt-1">
+            <Tag className="w-3.5 h-3.5 text-slate-400 mr-0.5" />
             <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider mr-1">
               Concepts:
             </span>
             {question.concepts.map((c, i) => (
               <span
                 key={i}
-                className="px-2 py-0.5 bg-slate-100 border border-slate-200 rounded text-xs font-mono font-medium text-slate-700"
+                className="px-2.5 py-0.5 bg-slate-100 hover:bg-slate-200/80 border border-slate-200 rounded-md text-xs font-mono font-medium text-slate-700 transition-colors"
               >
                 {c}
               </span>
@@ -96,9 +182,9 @@ export default function QuestionPanel({ question }) {
         <div className="flex flex-col gap-2">
           <div className="flex items-center gap-1.5 text-xs font-bold text-slate-800 uppercase tracking-wider">
             <Sparkles className="w-3.5 h-3.5 text-emerald-600" />
-            <span>Code Execution Context</span>
+            <span>Target Execution Code</span>
           </div>
-          <pre className="p-4 bg-slate-900 text-slate-100 rounded-lg text-xs lg:text-sm font-mono leading-relaxed overflow-x-auto border border-slate-800">
+          <pre className="p-4 bg-slate-900 text-slate-100 rounded-xl text-xs lg:text-sm font-mono leading-relaxed overflow-x-auto border border-slate-800 shadow-inner">
             <code>{codeSnippet}</code>
           </pre>
         </div>
@@ -106,14 +192,14 @@ export default function QuestionPanel({ question }) {
 
       {/* Requirements */}
       {question.requirements && question.requirements.length > 0 && (
-        <div className="flex flex-col gap-2">
+        <div className="flex flex-col gap-2.5">
           <div className="flex items-center gap-1.5 text-xs font-bold text-slate-800 uppercase tracking-wider">
             <CheckCircle className="w-3.5 h-3.5 text-blue-600" />
-            <span>Requirements</span>
+            <span>Key Requirements</span>
           </div>
-          <ul className="space-y-2">
+          <ul className="space-y-2 bg-slate-50/70 p-4 rounded-xl border border-slate-200/80">
             {question.requirements.map((req, idx) => (
-              <li key={idx} className="text-xs sm:text-sm text-slate-600 flex items-start gap-2.5 leading-normal">
+              <li key={idx} className="text-xs sm:text-sm text-slate-700 flex items-start gap-2.5 leading-normal">
                 <span className="text-blue-500 font-bold mt-0.5">•</span>
                 <span>{req}</span>
               </li>
@@ -129,7 +215,7 @@ export default function QuestionPanel({ question }) {
             <ShieldAlert className="w-3.5 h-3.5 text-slate-500" />
             <span>Constraints & Environment</span>
           </div>
-          <ul className="space-y-1.5">
+          <ul className="space-y-1.5 bg-white p-3 rounded-lg border border-slate-100">
             {question.constraints.map((c, idx) => (
               <li key={idx} className="text-xs sm:text-sm text-slate-500 flex items-start gap-2">
                 <span className="text-slate-400">—</span>
@@ -168,7 +254,7 @@ export default function QuestionPanel({ question }) {
               <div className="flex items-center justify-between border-b border-slate-800 pb-2.5">
                 <div className="flex items-center gap-2 text-xs font-mono text-emerald-400 font-semibold">
                   <Code2 className="w-3.5 h-3.5" />
-                  <span>{question.technology || 'Code'} Solution</span>
+                  <span>{question.technology || 'Code'} Reference Solution</span>
                 </div>
                 <button
                   onClick={handleCopySolution}
@@ -195,7 +281,7 @@ export default function QuestionPanel({ question }) {
                 </pre>
               ) : question.predictConfig?.correctAnswer ? (
                 <div className="flex flex-col gap-2">
-                  <div className="text-xs font-mono text-slate-400">Correct Output:</div>
+                  <div className="text-xs font-mono text-slate-400">Correct Output / Selection:</div>
                   <div className="p-2.5 bg-slate-950 rounded-lg text-xs sm:text-sm font-mono text-emerald-400 font-bold border border-slate-800">
                     {question.predictConfig.correctAnswer}
                   </div>
@@ -215,3 +301,4 @@ export default function QuestionPanel({ question }) {
     </div>
   );
 }
+

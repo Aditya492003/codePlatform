@@ -153,17 +153,21 @@ export const questionService = {
    * Get single question by ID or slug from backend / Atlas
    */
   async getQuestionById(id) {
+    console.log(`[questionService] 📡 Fetching question from API endpoint: /questions/${id}`);
     try {
       const res = await apiRequest(`/questions/${id}`);
       if (res?.data) {
-        return sanitizeQuestion({
+        const sanitized = sanitizeQuestion({
           ...res.data,
           id: res.data.slug || res.data._id || id,
         });
+        console.log(`[questionService] ✅ Successfully fetched & sanitized question for "${id}":`, sanitized);
+        return sanitized;
       }
     } catch (err) {
-      console.warn(`[questionService] Failed to load question ${id}, falling back:`, err.message);
+      console.error(`%c[questionService] ❌ API Request failed for "${id}":`, 'color: #dc2626; font-weight: bold;', err);
     }
+    console.warn(`[questionService] ⚠️ Using fallback template for "${id}"`);
     const inferredTech = id?.startsWith('cs-') ? 'CSS' : id?.startsWith('js-') ? 'JavaScript' : 'HTML';
     return createTechFallback(inferredTech, 'Beginner', 1, 1, id);
   },

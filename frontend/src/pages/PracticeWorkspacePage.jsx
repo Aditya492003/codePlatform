@@ -5,6 +5,7 @@ import { useProgress } from '../context/ProgressContext';
 import ChallengeHeader from '../components/workspace/ChallengeHeader';
 import QuestionPanel from '../components/workspace/QuestionPanel';
 import MonacoCodeEditor from '../components/workspace/MonacoCodeEditor';
+import McqSelectionView from '../components/workspace/McqSelectionView';
 import PredictAnswerView from '../components/workspace/PredictAnswerView';
 import TestResults from '../components/workspace/TestResults';
 import EvaluationPanel from '../components/workspace/EvaluationPanel';
@@ -26,8 +27,11 @@ export default function PracticeWorkspacePage() {
 
   const {
     selectedTech,
+    setSelectedTech,
     selectedDifficulty,
+    setSelectedDifficulty,
     selectedLevel,
+    setSelectedLevel,
   } = useProgress();
 
   // Load question on mount or URL change
@@ -39,7 +43,22 @@ export default function PracticeWorkspacePage() {
       targetId = `${techPrefix}-${diffPrefix}-l${selectedLevel}-q01`;
     }
     loadQuestion(targetId);
-  }, [questionId, selectedTech, selectedDifficulty, selectedLevel]);
+  }, [questionId]);
+
+  // Synchronize track selectors when a specific question is loaded
+  useEffect(() => {
+    if (currentQuestion) {
+      if (currentQuestion.technology && currentQuestion.technology !== selectedTech) {
+        setSelectedTech(currentQuestion.technology);
+      }
+      if (currentQuestion.difficulty && currentQuestion.difficulty !== selectedDifficulty) {
+        setSelectedDifficulty(currentQuestion.difficulty);
+      }
+      if (currentQuestion.level && Number(currentQuestion.level) !== Number(selectedLevel)) {
+        setSelectedLevel(Number(currentQuestion.level));
+      }
+    }
+  }, [currentQuestion?.id]);
 
   if (isLoadingQuestion && !currentQuestion) {
     return (
@@ -91,14 +110,16 @@ export default function PracticeWorkspacePage() {
           <QuestionPanel question={currentQuestion} />
         </div>
 
-        {/* Right: Code Editor / Predict View / In-Place Transformed Evaluation View */}
+        {/* Right: Code Editor / MCQ View / Predict View / Evaluation View */}
         <div className="overflow-hidden flex flex-col bg-white">
           {isEvaluatedOrCompleted ? (
             <EvaluationPanel
               evaluation={evaluation}
               onContinue={currentQuestion?.questionNumber < 20 ? handleContinueToNext : null}
             />
-          ) : (currentQuestion?.type === 'PREDICT' || currentQuestion?.type === 'PREDICT_OUTPUT' || currentQuestion?.type === 'MCQ') ? (
+          ) : currentQuestion?.type === 'MCQ' ? (
+            <McqSelectionView isReadOnly={isEvaluatedOrCompleted} />
+          ) : (currentQuestion?.type === 'PREDICT' || currentQuestion?.type === 'PREDICT_OUTPUT') ? (
             <PredictAnswerView isReadOnly={isEvaluatedOrCompleted} />
           ) : (
             <div className="flex-1 flex flex-col min-h-0">

@@ -99,24 +99,13 @@ export function ProgressProvider({ children }) {
 
     setQuestionStatuses((prev) => {
       const updated = { ...prev };
-      let highestSolvedNum = 0;
 
       for (let i = 1; i <= 20; i++) {
         const qId = `${prefix}${String(i).padStart(2, '0')}`;
         if (solvedList.includes(qId)) {
           updated[qId] = 'submitted';
-          if (i > highestSolvedNum) highestSolvedNum = i;
-        }
-      }
-
-      for (let i = 1; i <= 20; i++) {
-        const qId = `${prefix}${String(i).padStart(2, '0')}`;
-        if (updated[qId] !== 'submitted') {
-          if (i <= highestSolvedNum + 1) {
-            updated[qId] = 'available';
-          } else if (!updated[qId]) {
-            updated[qId] = 'locked';
-          }
+        } else if (!updated[qId] || updated[qId] === 'locked') {
+          updated[qId] = 'available';
         }
       }
 
@@ -137,10 +126,7 @@ export function ProgressProvider({ children }) {
         const techPrefix = selectedTech === 'HTML' ? 'ht' : selectedTech === 'CSS' ? 'css' : 'js';
         const diffPrefix = selectedDifficulty.toLowerCase().slice(0, 3);
         const nextId = `${techPrefix}-${diffPrefix}-l${selectedLevel}-q${String(nextNum).padStart(2, '0')}`;
-
-        if (!updated[nextId] || updated[nextId] === 'locked') {
-          updated[nextId] = 'available';
-        }
+        updated[nextId] = updated[nextId] || 'available';
       }
       return updated;
     });
@@ -208,15 +194,13 @@ export function ProgressProvider({ children }) {
     return `${tech}-${diff}-l${lvl}-q${qNum}`;
   };
 
-  const isQuestionAccessible = (qId) => {
-    const key = normalizeKey(qId);
-    const status = questionStatuses[qId] || questionStatuses[key];
-    return status === 'available' || status === 'in_progress' || status === 'submitted';
+  const isQuestionAccessible = () => {
+    return true;
   };
 
-  const getQuestionStatus = (qId, questionNum) => {
+  const getQuestionStatus = (qId) => {
     const key = normalizeKey(qId);
-    return questionStatuses[qId] || questionStatuses[key] || (questionNum === 1 ? 'available' : 'locked');
+    return questionStatuses[qId] || questionStatuses[key] || 'available';
   };
 
   return (

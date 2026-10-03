@@ -67,6 +67,32 @@ export const getUserProfile = async (req, res) => {
       user = await User.findById(id);
     }
 
+    if (!user && id === 'usr_guest') {
+      user = await User.findOneAndUpdate(
+        { clerkId: 'usr_guest' },
+        {
+          $setOnInsert: {
+            clerkId: 'usr_guest',
+            username: 'guest_user',
+            fullName: 'Guest Developer',
+            email: 'guest@codepractice.dev',
+            tier: 'Bronze',
+            overallRating: 750,
+            problemsSolved: 0,
+            skillRatings: { JavaScript: 750, HTML: 750, CSS: 750 },
+            difficultyProgress: {
+              Beginner: { completed: 0, total: 20, percentage: 0 },
+              Medium: { completed: 0, total: 20, percentage: 0 },
+              Advanced: { completed: 0, total: 20, percentage: 0 },
+              Expert: { completed: 0, total: 20, percentage: 0 },
+            },
+            ratingHistory: [{ date: 'Initial', rating: 750 }],
+          },
+        },
+        { upsert: true, new: true }
+      );
+    }
+
     if (!user) {
       return res.status(404).json({ success: false, message: 'User not found' });
     }

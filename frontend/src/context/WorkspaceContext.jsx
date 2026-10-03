@@ -91,6 +91,7 @@ export function WorkspaceProvider({ children }) {
    * Load a specific question into workspace
    */
   const loadQuestion = async (questionId, performanceContext = null) => {
+    console.log(`%c[WorkspaceContext] 🚀 loadQuestion STARTED for: "${questionId}"`, 'color: #059669; font-weight: bold;');
     setIsLoadingQuestion(true);
     setNoticeMessage(null);
     setIsTimerRunning(false);
@@ -111,6 +112,22 @@ export function WorkspaceProvider({ children }) {
       } else {
         q = await questionService.getQuestionById(questionId);
       }
+
+      if (!q) {
+        console.error(`%c[WorkspaceContext] ❌ ERROR: Failed to retrieve question "${questionId}" - received null/undefined`, 'color: #dc2626; font-weight: bold;');
+        return;
+      }
+
+      console.log(`%c[WorkspaceContext] ✅ Question successfully retrieved:`, 'color: #059669;', {
+        slug: q.slug,
+        id: q.id,
+        title: q.title,
+        technology: q.technology,
+        difficulty: q.difficulty,
+        level: q.level,
+        questionNumber: q.questionNumber,
+        type: q.type,
+      });
 
       setCurrentQuestion(q);
 
@@ -138,7 +155,7 @@ export function WorkspaceProvider({ children }) {
         return prev;
       });
     } catch (err) {
-      console.error('Failed to load question:', err);
+      console.error(`%c[WorkspaceContext] ❌ Failed to load question "${questionId}":`, 'color: #dc2626; font-weight: bold;', err);
     } finally {
       setIsLoadingQuestion(false);
     }
