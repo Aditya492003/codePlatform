@@ -7,6 +7,7 @@ import PracticeWorkspacePage from './pages/PracticeWorkspacePage';
 import LeaderboardPage from './pages/LeaderboardPage';
 import ProfilePage from './pages/ProfilePage';
 import SettingsPage from './pages/SettingsPage';
+import SqlLearningPage from './pages/SqlLearningPage';
 
 export default function App() {
   const location = useLocation();
@@ -21,6 +22,7 @@ export default function App() {
         <Routes>
           <Route path="/" element={<LandingPage />} />
           <Route path="/dashboard" element={<DashboardPage />} />
+          <Route path="/sql-studio" element={<SqlLearningPage />} />
           <Route path="/leaderboard" element={<LeaderboardPage />} />
           <Route path="/practice" element={<PracticeWorkspacePage />} />
           <Route path="/practice/:questionId" element={<PracticeWorkspacePage />} />

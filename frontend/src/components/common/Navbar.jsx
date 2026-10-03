@@ -1,7 +1,7 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { SignedIn, SignedOut, SignInButton, UserButton } from '@clerk/clerk-react';
-import { Code2, LayoutDashboard, Trophy, User, Settings, Award } from 'lucide-react';
+import { Code2, LayoutDashboard, Trophy, User, Settings, Award, Database } from 'lucide-react';
 import { useProgress } from '../../context/ProgressContext';
 import { mockUser } from '../../data/mockUser';
 
@@ -38,6 +38,21 @@ export default function Navbar() {
           >
             <LayoutDashboard className="w-4 h-4" />
             <span>Dashboard</span>
+          </Link>
+
+          <Link
+            to="/sql-studio"
+            className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
+              isLinkActive('/sql-studio')
+                ? 'bg-cyan-50 text-cyan-700 font-semibold'
+                : 'text-slate-600 hover:text-cyan-700 hover:bg-cyan-50/50'
+            }`}
+          >
+            <Database className="w-4 h-4 text-cyan-600" />
+            <span className="flex items-center gap-1.5">
+              SQL Studio
+              <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-cyan-100 text-cyan-800 font-bold">New</span>
+            </span>
           </Link>
 
           <Link

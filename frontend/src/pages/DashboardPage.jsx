@@ -124,6 +124,32 @@ export default function DashboardPage() {
           </div>
         </div>
 
+        {/* Dynamic SQL Learning Studio Feature Banner */}
+        <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-slate-900 via-slate-800 to-indigo-950 p-6 sm:p-7 text-white shadow-xl border border-slate-800 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
+          <div className="space-y-2 max-w-2xl">
+            <div className="flex items-center gap-2">
+              <span className="px-2.5 py-0.5 rounded-full bg-cyan-500/20 text-cyan-300 border border-cyan-500/30 text-xs font-bold uppercase tracking-wide">
+                ✨ New Feature
+              </span>
+              <span className="text-xs text-slate-400">Isolated Workspaces (Max 5)</span>
+            </div>
+            <h2 className="text-xl sm:text-2xl font-extrabold text-white tracking-tight">
+              Interactive SQL Learning Studio & Visual Engine
+            </h2>
+            <p className="text-sm text-slate-300 leading-relaxed">
+              Create tables dynamically, query live side-by-side relational schemas, master multi-table <code className="bg-slate-800 px-1.5 py-0.5 rounded text-cyan-300 font-mono text-xs">INNER / LEFT JOINs</code>, and manage up to 5 isolated playgrounds without altering your code challenge track.
+            </p>
+          </div>
+
+          <button
+            onClick={() => navigate('/sql-studio')}
+            className="px-5 py-3 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white font-bold text-sm shadow-lg shadow-cyan-500/25 flex items-center gap-2 transition-all shrink-0 cursor-pointer"
+          >
+            <span>Launch SQL Studio</span>
+            <ArrowRight className="w-4 h-4" />
+          </button>
+        </div>
+
         {/* Challenge Track Configuration Panel */}
         <div className="bg-white border border-slate-200 rounded-xl p-6 sm:p-7 shadow-xs flex flex-col gap-6">
           <div>

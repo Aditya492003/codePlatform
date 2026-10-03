@@ -9,6 +9,7 @@ import healthRoutes from './routes/healthRoutes.js';
 import questionRoutes from './routes/questionRoutes.js';
 import userRoutes from './routes/userRoutes.js';
 import submissionRoutes from './routes/submissionRoutes.js';
+import sqlWorkspaceRoutes from './routes/sqlWorkspaceRoutes.js';
 
 // Load environment variables
 dotenv.config();
@@ -47,6 +48,7 @@ app.use('/api/health', healthRoutes);
 app.use('/api/questions', questionRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/submissions', submissionRoutes);
+app.use('/api/sql-workspaces', sqlWorkspaceRoutes);
 
 // 404 Handler
 app.use((req, res, next) => {

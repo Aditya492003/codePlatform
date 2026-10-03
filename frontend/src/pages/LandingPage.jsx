@@ -15,7 +15,8 @@ import {
   Trophy,
   CheckCircle2,
   BookOpen,
-  Laptop
+  Laptop,
+  Database
 } from 'lucide-react';
 import { TECHNOLOGIES } from '../data/questions';
 
@@ -27,12 +28,23 @@ export default function LandingPage() {
       {/* ==================================================== */}
       <header className="h-14 bg-[#262626] border-b border-white/10 px-4 sm:px-8 flex items-center justify-between sticky top-0 z-50">
         {/* Brand */}
-        <Link to="/" className="flex items-center gap-2.5 font-bold text-white tracking-tight text-lg">
-          <div className="w-7 h-7 rounded-md bg-white text-slate-900 flex items-center justify-center">
-            <Code2 className="w-4 h-4" />
-          </div>
-          <span>CodePractice</span>
-        </Link>
+        <div className="flex items-center gap-6">
+          <Link to="/" className="flex items-center gap-2.5 font-bold text-white tracking-tight text-lg">
+            <div className="w-7 h-7 rounded-md bg-white text-slate-900 flex items-center justify-center">
+              <Code2 className="w-4 h-4" />
+            </div>
+            <span>CodePractice</span>
+          </Link>
+
+          <Link
+            to="/sql-studio"
+            className="hidden sm:flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-full bg-cyan-500/10 text-cyan-300 border border-cyan-500/30 hover:bg-cyan-500/20 transition-colors"
+          >
+            <Database className="w-3.5 h-3.5 text-cyan-400" />
+            <span>SQL Studio</span>
+            <span className="text-[10px] bg-cyan-400 text-slate-900 font-bold px-1 rounded-sm">NEW</span>
+          </Link>
+        </div>
 
         {/* Right Auth Controls */}
         <div className="flex items-center gap-4">
