@@ -91,13 +91,29 @@ export const groqCodeEvaluator = {
       };
     }
 
-    // 2. CHECK: Predict Output Question
-    if (question?.type === 'PREDICT_OUTPUT' || question?.type === 'PREDICT') {
+    // 2. CHECK: Predict Output / MCQ Question
+    if (question?.type === 'PREDICT_OUTPUT' || question?.type === 'PREDICT' || question?.type === 'MCQ') {
       const config = question.predictConfig || {};
-      const selected = predictAnswer?.selectedOptionId || predictAnswer;
-      const isCorrect =
-        selected === config.correctAnswer ||
-        config.options?.some((opt) => (opt.id === selected || opt.label === selected) && opt.isCorrect);
+      const selectedRaw = predictAnswer?.selectedOptionId || (typeof predictAnswer === 'string' ? predictAnswer : predictAnswer?.answer);
+      
+      const normalizeText = (s) => String(s || '').trim().replace(/^['"`]|['"`]$/g, '').replace(/[\s\r\n]+/g, ' ').toLowerCase();
+
+      let isCorrect = false;
+      if (selectedRaw) {
+        if (config.correctAnswer && normalizeText(selectedRaw) === normalizeText(config.correctAnswer)) {
+          isCorrect = true;
+        } else if (Array.isArray(config.options)) {
+          const matchedOpt = config.options.find(
+            (opt) =>
+              opt.id === selectedRaw ||
+              (typeof opt === 'string' && (opt === selectedRaw || normalizeText(opt) === normalizeText(selectedRaw))) ||
+              (opt.label && (opt.label === selectedRaw || normalizeText(opt.label) === normalizeText(selectedRaw)))
+          );
+          if (matchedOpt) {
+            isCorrect = Boolean(matchedOpt.isCorrect) || (config.correctAnswer ? normalizeText(matchedOpt.label || matchedOpt) === normalizeText(config.correctAnswer) : false);
+          }
+        }
+      }
 
       const score = isCorrect ? 100 : 0;
       const ratingGain = isCorrect ? 10 : 0;
@@ -112,6 +128,7 @@ export const groqCodeEvaluator = {
         classification: isCorrect ? 'Perfect' : 'Needs Work',
         testsPassed: isCorrect ? 1 : 0,
         totalTests: 1,
+        referenceSolution: question.solutionCode || config.correctAnswer || '',
         breakdown: {
           correctness: { score: isCorrect ? 50 : 0, max: 50, label: 'Correctness' },
           codeQuality: { score: isCorrect ? 20 : 0, max: 20, label: 'Code Quality' },
@@ -122,19 +139,19 @@ export const groqCodeEvaluator = {
         tests: [
           {
             id: 'tc-predict-1',
-            name: 'Execution Output Prediction',
+            name: question.type === 'MCQ' ? 'Multiple Choice Answer Verification' : 'Execution Output Prediction',
             status: isCorrect ? 'passed' : 'failed',
-            input: config.snippet || 'Snippet Trace',
-            expected: config.correctAnswer || 'Correct execution order',
-            actual: selected || 'No answer selected',
-            error: isCorrect ? '' : config.explanation || 'Incorrect execution sequence predicted.',
+            input: config.snippet || question.starterCode || 'Evaluation Context',
+            expected: config.correctAnswer || 'Correct selection',
+            actual: selectedRaw || 'No answer selected',
+            error: isCorrect ? '' : config.explanation || 'Incorrect choice or execution sequence predicted.',
           },
         ],
         aiReview: {
-          strengths: isCorrect ? ['Accurate understanding of runtime execution and queue priority.'] : [],
+          strengths: isCorrect ? ['Accurate understanding of core concepts and execution semantics.'] : [],
           improvements: isCorrect
             ? []
-            : [config.explanation || 'Review JavaScript execution order (synchronous -> microtasks -> macrotasks).'],
+            : [config.explanation || 'Review the core language concepts and try again.'],
         },
         codeSmells: [],
         ratingDelta: {
@@ -264,6 +281,7 @@ Return ONLY valid JSON matching the system schema.`;
         classification: evaluationResult.classification || 'Proficient',
         testsPassed: evaluationResult.testsPassed || 0,
         totalTests: evaluationResult.totalTests || (evaluationResult.tests?.length || 1),
+        referenceSolution: question.solutionCode || '',
         breakdown: evaluationResult.breakdown || {
           correctness: { score: 0, max: 50, label: 'Correctness' },
           codeQuality: { score: 0, max: 20, label: 'Code Quality' },
@@ -295,6 +313,7 @@ Return ONLY valid JSON matching the system schema.`;
         classification: hasLogic ? 'Proficient' : 'Needs Work',
         testsPassed: hasLogic ? 2 : 0,
         totalTests: 2,
+        referenceSolution: question.solutionCode || '',
         breakdown: {
           correctness: { score: hasLogic ? 35 : 0, max: 50, label: 'Correctness' },
           codeQuality: { score: hasLogic ? 15 : 0, max: 20, label: 'Code Quality' },

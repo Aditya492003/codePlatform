@@ -98,7 +98,7 @@ export default function PracticeWorkspacePage() {
               evaluation={evaluation}
               onContinue={currentQuestion?.questionNumber < 20 ? handleContinueToNext : null}
             />
-          ) : currentQuestion?.type === 'PREDICT' ? (
+          ) : (currentQuestion?.type === 'PREDICT' || currentQuestion?.type === 'PREDICT_OUTPUT' || currentQuestion?.type === 'MCQ') ? (
             <PredictAnswerView isReadOnly={isEvaluatedOrCompleted} />
           ) : (
             <div className="flex-1 flex flex-col min-h-0">

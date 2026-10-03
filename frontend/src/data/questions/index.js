@@ -12,9 +12,19 @@ export const QUESTION_TYPES = {
     description: 'Write a solution from scratch',
     color: '#0284c7' // sky-600
   },
+  CODING: {
+    label: 'CODING',
+    description: 'Write functional code implementation',
+    color: '#0284c7' // sky-600
+  },
   DEBUG: {
     label: 'DEBUG',
     description: 'Identify and fix broken implementation',
+    color: '#dc2626' // red-600
+  },
+  FIX_CODE: {
+    label: 'FIX CODE',
+    description: 'Fix subtle syntax or logic issues',
     color: '#dc2626' // red-600
   },
   REFACTOR: {
@@ -31,6 +41,16 @@ export const QUESTION_TYPES = {
     label: 'PREDICT',
     description: 'Analyze code and predict execution output',
     color: '#059669' // emerald-600
+  },
+  PREDICT_OUTPUT: {
+    label: 'PREDICT OUTPUT',
+    description: 'Analyze execution and predict console output',
+    color: '#059669' // emerald-600
+  },
+  MCQ: {
+    label: 'MULTIPLE CHOICE',
+    description: 'Select the single correct choice',
+    color: '#4f46e5' // indigo-600
   },
   OPTIMIZE: {
     label: 'OPTIMIZE',

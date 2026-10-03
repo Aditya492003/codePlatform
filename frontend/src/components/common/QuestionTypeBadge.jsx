@@ -7,8 +7,18 @@ const TYPE_CONFIG = {
     icon: Hammer,
     classes: 'bg-sky-50 text-sky-700 border-sky-200'
   },
+  CODING: {
+    label: 'CODING',
+    icon: Hammer,
+    classes: 'bg-sky-50 text-sky-700 border-sky-200'
+  },
   DEBUG: {
     label: 'DEBUG',
+    icon: Bug,
+    classes: 'bg-red-50 text-red-700 border-red-200'
+  },
+  FIX_CODE: {
+    label: 'FIX CODE',
     icon: Bug,
     classes: 'bg-red-50 text-red-700 border-red-200'
   },
@@ -26,6 +36,16 @@ const TYPE_CONFIG = {
     label: 'PREDICT',
     icon: Eye,
     classes: 'bg-emerald-50 text-emerald-700 border-emerald-200'
+  },
+  PREDICT_OUTPUT: {
+    label: 'PREDICT OUTPUT',
+    icon: Eye,
+    classes: 'bg-emerald-50 text-emerald-700 border-emerald-200'
+  },
+  MCQ: {
+    label: 'MULTIPLE CHOICE',
+    icon: CheckSquare,
+    classes: 'bg-indigo-50 text-indigo-700 border-indigo-200'
   },
   OPTIMIZE: {
     label: 'OPTIMIZE',

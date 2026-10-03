@@ -48,16 +48,29 @@ export const getQuestionById = async (req, res) => {
     }
 
     if (!question) {
-      // If it looks like a structured slug like "ht-beg-l1-q01"
-      const parts = id.split('-');
-      if (parts.length >= 4) {
-        const techMap = { js: 'JavaScript', ht: 'HTML', html: 'HTML', cs: 'CSS', css: 'CSS' };
-        const diffMap = { beg: 'Beginner', med: 'Medium', adv: 'Advanced', exp: 'Expert' };
-        const tech = techMap[parts[0].toLowerCase()] || 'HTML';
-        const diff = diffMap[parts[1].toLowerCase()] || 'Beginner';
-        const lvl = parseInt(parts[2].replace('l', ''), 10) || 1;
-        const qNum = parseInt(parts[3].replace('q', ''), 10) || 1;
+      const lower = id.toLowerCase();
+      // Match patterns like: "javascript-beginner-level-1-q1", "html-medium-level-2-q15", "ht-beg-l1-q01"
+      let tech = null;
+      let diff = null;
+      let lvl = 1;
+      let qNum = 1;
 
+      if (lower.startsWith('javascript') || lower.startsWith('js')) tech = 'JavaScript';
+      else if (lower.startsWith('html') || lower.startsWith('ht')) tech = 'HTML';
+      else if (lower.startsWith('css') || lower.startsWith('cs')) tech = 'CSS';
+
+      if (lower.includes('expert') || lower.includes('exp')) diff = 'Expert';
+      else if (lower.includes('advanced') || lower.includes('adv')) diff = 'Advanced';
+      else if (lower.includes('medium') || lower.includes('med')) diff = 'Medium';
+      else if (lower.includes('beginner') || lower.includes('beg')) diff = 'Beginner';
+
+      const lvlMatch = lower.match(/l(?:evel-?)?(\d+)/);
+      if (lvlMatch) lvl = parseInt(lvlMatch[1], 10);
+
+      const qMatch = lower.match(/q(?:uestion-?)?(\d+)/);
+      if (qMatch) qNum = parseInt(qMatch[1], 10);
+
+      if (tech && diff) {
         question = await Question.findOne({
           technology: new RegExp(`^${tech}$`, 'i'),
           difficulty: new RegExp(`^${diff}$`, 'i'),

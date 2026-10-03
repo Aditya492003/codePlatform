@@ -35,6 +35,7 @@ export const submissionService = {
           ...res.evaluation,
           submissionId: res.submission?._id || res.evaluation.submissionId,
           updatedUser: res.user || null,
+          referenceSolution: res.evaluation.referenceSolution || questionData?.solutionCode || '',
         };
       }
     } catch (err) {

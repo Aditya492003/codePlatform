@@ -185,13 +185,38 @@ export function ProgressProvider({ children }) {
     }
   };
 
+  const normalizeKey = (id) => {
+    if (!id) return '';
+    const lower = id.toLowerCase();
+    let tech = 'js';
+    if (lower.startsWith('html') || lower.startsWith('ht')) tech = 'ht';
+    else if (lower.startsWith('css') || lower.startsWith('cs')) tech = 'css';
+    else if (lower.startsWith('javascript') || lower.startsWith('js')) tech = 'js';
+
+    let diff = 'beg';
+    if (lower.includes('expert') || lower.includes('exp')) diff = 'exp';
+    else if (lower.includes('advanced') || lower.includes('adv')) diff = 'adv';
+    else if (lower.includes('medium') || lower.includes('med')) diff = 'med';
+    else if (lower.includes('beginner') || lower.includes('beg')) diff = 'beg';
+
+    const lvlMatch = lower.match(/l(?:evel-?)?(\d+)/);
+    const lvl = lvlMatch ? lvlMatch[1] : '1';
+
+    const qMatch = lower.match(/q(?:uestion-?)?(\d+)/);
+    const qNum = qMatch ? String(parseInt(qMatch[1], 10)).padStart(2, '0') : '01';
+
+    return `${tech}-${diff}-l${lvl}-q${qNum}`;
+  };
+
   const isQuestionAccessible = (qId) => {
-    const status = questionStatuses[qId];
+    const key = normalizeKey(qId);
+    const status = questionStatuses[qId] || questionStatuses[key];
     return status === 'available' || status === 'in_progress' || status === 'submitted';
   };
 
   const getQuestionStatus = (qId, questionNum) => {
-    return questionStatuses[qId] || (questionNum === 1 ? 'available' : 'locked');
+    const key = normalizeKey(qId);
+    return questionStatuses[qId] || questionStatuses[key] || (questionNum === 1 ? 'available' : 'locked');
   };
 
   return (

@@ -72,7 +72,6 @@ const QuestionSchema = new mongoose.Schema(
     },
     type: {
       type: String,
-      enum: ['BUILD', 'PREDICT_OUTPUT', 'DEBUG'],
       default: 'BUILD',
       index: true,
     },
@@ -98,11 +97,11 @@ const QuestionSchema = new mongoose.Schema(
       default: '',
     },
     predictConfig: {
-      type: PredictConfigSchema,
+      type: mongoose.Schema.Types.Mixed,
       default: null,
     },
     evaluationCriteria: {
-      type: EvaluationCriteriaSchema,
+      type: mongoose.Schema.Types.Mixed,
       default: () => ({}),
     },
     estimatedTime: {

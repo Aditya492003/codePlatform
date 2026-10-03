@@ -21,19 +21,48 @@ export const cleanCodeString = (code) => {
   return cleaned.trim();
 };
 
+const toArray = (val) => {
+  if (!val) return [];
+  if (Array.isArray(val)) return val.map((s) => (typeof s === 'string' ? s.trim() : String(s)));
+  if (typeof val === 'string') return [val.trim()];
+  return [];
+};
+
 const sanitizeQuestion = (q) => {
   if (!q) return q;
+
+  let normalizedPredictConfig = null;
+  if (q.predictConfig) {
+    let options = q.predictConfig.options;
+    if (Array.isArray(options)) {
+      options = options.map((opt, idx) => {
+        if (typeof opt === 'string') {
+          return {
+            id: `opt-${idx + 1}`,
+            label: opt,
+            isCorrect: q.predictConfig.correctAnswer ? opt.trim() === q.predictConfig.correctAnswer.trim() : false,
+          };
+        }
+        return opt;
+      });
+    }
+
+    normalizedPredictConfig = {
+      ...q.predictConfig,
+      snippet: cleanCodeString(q.predictConfig.snippet || q.starterCode || ''),
+      options: options || [],
+    };
+  }
+
   return {
     ...q,
     id: q.slug || q._id || q.id,
+    concepts: toArray(q.concepts),
+    requirements: toArray(q.requirements),
+    constraints: toArray(q.constraints),
     starterCode: cleanCodeString(q.starterCode),
     solutionCode: cleanCodeString(q.solutionCode),
-    predictConfig: q.predictConfig
-      ? {
-          ...q.predictConfig,
-          snippet: cleanCodeString(q.predictConfig.snippet),
-        }
-      : null,
+    predictConfig: normalizedPredictConfig,
   };
 };
 

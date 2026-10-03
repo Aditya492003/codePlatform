@@ -169,6 +169,25 @@ export default function EvaluationPanel({ evaluation, onContinue }) {
       {/* AI Code Review */}
       <CodeReview aiReview={aiReview} />
 
+      {/* Reference Solution Card */}
+      {(evaluation?.referenceSolution || evaluation?.questionSolutionCode) && (
+        <div className="bg-slate-900 border border-slate-800 rounded-xl p-5 shadow-xs flex flex-col gap-3 text-slate-100">
+          <div className="flex items-center justify-between border-b border-slate-800 pb-2.5">
+            <span className="text-xs font-bold uppercase tracking-wider text-emerald-400 flex items-center gap-1.5 font-mono">
+              <Code2 className="w-4 h-4" />
+              <span>Official Reference Solution</span>
+            </span>
+            <span className="text-[11px] font-mono text-slate-400">
+              Verified Solution
+            </span>
+          </div>
+
+          <pre className="p-3.5 bg-slate-950 rounded-lg text-xs sm:text-sm font-mono leading-relaxed overflow-x-auto text-emerald-300 border border-slate-800/80">
+            <code>{evaluation.referenceSolution || evaluation.questionSolutionCode}</code>
+          </pre>
+        </div>
+      )}
+
       {/* Footer Banner */}
       <div className="mt-2 p-4 bg-white border border-slate-200 rounded-xl flex items-center justify-between shadow-xs">
         <div className="flex items-center gap-2 text-xs font-medium text-slate-600">

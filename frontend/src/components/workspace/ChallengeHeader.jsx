@@ -98,7 +98,7 @@ export default function ChallengeHeader() {
               <span>Reset</span>
             </button>
 
-            {currentQuestion.type !== 'PREDICT' && (
+            {!['PREDICT', 'PREDICT_OUTPUT', 'MCQ'].includes(currentQuestion.type) && (
               <button
                 onClick={runCode}
                 disabled={isRunning || isSubmitting}
